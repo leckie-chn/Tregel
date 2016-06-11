@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package master;
+
+service MasterService {
+    rpc Register (RegisterRequest) returns (RegisterResponse) {}
+}
+
+message RegisterRequest {
+    string ClientAddr = 1;  
+}
+
+message RegisterResponse {
+}
