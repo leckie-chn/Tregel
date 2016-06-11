@@ -1,8 +1,10 @@
-# Tregel - A toy version of Pregel
+# Tregel - A toy version of [Pregel](http://www.cs.cmu.edu/~pavlo/courses/fall2013/static/papers/p135-malewicz.pdf)
 
 * Yan Ni <niyan.ny@pku.edu.cn>
 * Shouyang Li
-* Jinan Ni
+* Jinan Ni<nijinan@pku.edu.cn>
+
+
 
 ## Library Dependency
 
