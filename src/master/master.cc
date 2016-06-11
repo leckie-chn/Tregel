@@ -13,8 +13,8 @@ using grpc::ServerContext;
 using grpc::Server;
 using grpc::ServerBuilder;
 
-class MasterImpl : public MasterService::Service {
-    Status RegisterClient(ServerContext* ctxt, const RegisterRequest *request, RegisterResponse *response) {
+class MasterImpl final : public MasterService::Service {
+    Status Register(ServerContext* ctxt, const RegisterRequest *request, RegisterResponse *response) override {
         std::cout << "Hello from " << request->clientaddr() << std::endl;
         return Status::OK;
     }
