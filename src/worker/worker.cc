@@ -3,29 +3,32 @@
 #include <grpc++/grpc++.h>
 
 #include "../rpc/master.grpc.pb.h"
+#include "workerImpl.h"
 
-using grpc::Channel;
-using grpc::CreateChannel;
-using grpc::InsecureChannelCredentials;
-using grpc::ClientContext;
-using master::MasterService;
-using master::RegisterRequest;
-using master::RegisterResponse;
+using grpc::ServerBuilder;
+using grpc::ServerContext;
+using grpc::Server;
+using grpc::Status;
+using grpc::InsecureServerCredentials;
+
+using std::string;
+using std::unique_ptr;
 
 
 int main(int argc, char **argv) {
-    auto channel = CreateChannel("127.0.0.1:50051", InsecureChannelCredentials()); 
-    auto stub = MasterService::NewStub(channel);
-    RegisterRequest request;
-    RegisterResponse response;
-    request.set_clientaddr(std::string(argv[1]));
-    ClientContext ctxt;
 
-    auto status = stub->Register(&ctxt, request, &response);
-    if (!status.ok()) {
-        std::cout << "rpc failed" << std::endl;
-    }
+    string master_port(argv[1]);
+    string worker_port(argv[2]);
+    string masteraddr = "162.105.146.42:" + master_port;
+    string workeraddr = "162.105.146.42:" + worker_port;
+    
+    WorkerImpl service(masteraddr, workeraddr);
+    ServerBuilder builder;
+    builder.AddListeningPort(workeraddr, InsecureServerCredentials());
+    builder.RegisterService(workeraddr, &service);
+    unique_ptr<Server> server(builder.BuildAndStart());
 
+    server->Wait();
 
     return 0;
 }

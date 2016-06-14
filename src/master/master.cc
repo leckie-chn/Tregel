@@ -4,27 +4,22 @@
 
 #include "../rpc/master.grpc.pb.h"
 #include "../rpc/master.pb.h"
+#include "masterImpl.h"
 
-using master::RegisterRequest;
-using master::RegisterResponse;
-using master::MasterService;
 using grpc::Status;
 using grpc::ServerContext;
 using grpc::Server;
 using grpc::ServerBuilder;
+using grpc::InsecureServerCredentials;
+using grpc::string;
 
-class MasterImpl final : public MasterService::Service {
-    Status Register(ServerContext* ctxt, const RegisterRequest *request, RegisterResponse *response) override {
-        std::cout << "Hello from " << request->clientaddr() << std::endl;
-        return Status::OK;
-    }
-};
 
-int main() {
+int main(int argc, char **argv) {
 
-    MasterImpl service;
+    MasterImpl service(10);
     ServerBuilder builder;
-    builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
+    const string ListeningAddr = "0.0.0.0:" + string(argv[1]);
+    builder.AddListeningPort(ListeningAddr, InsecureServerCredentials());
     builder.RegisterService(&service);
     std::unique_ptr<Server> server(builder.BuildAndStart());
     server->Wait();

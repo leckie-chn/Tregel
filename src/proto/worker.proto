@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package worker;
+
+service WorkerService {
+    rpc StartTask (StartRequest) returns (StartReply) {}    
+    rpc PushModel (PushRequest) returns (PushReply) {}
+}
+
+message StartRequest {
+    map<uint64, uint64> VertexPartition = 1;
+}
+
+message StartReply {
+    enum PartitionStatus {
+        OK = 0;
+        ERROR = 1;
+    }
+    PartitionStatus status = 1;
+}
+
+message GraphModel {
+    map<uint64, float> VertexValues = 1;
+}
+
+message PushRequest {
+    string WorkerAddr = 1;
+    uint64 RountNo = 2;
+    GraphModel model = 3;
+}
+
+message PushReply {
+    enum PushStatus {
+        OK = 0;
+        ERROR = 1;
+    }
+    PushStatus status = 1;
+}
+

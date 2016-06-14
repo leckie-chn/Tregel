@@ -1,5 +1,5 @@
 CPPFLAGS += -I/usr/local/include -pthread
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++11 -g
 LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++` -lprotobuf -lpthread -ldl
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
@@ -9,15 +9,17 @@ PROTO_PATH = ./src/proto
 RPC_PATH = ./src/rpc
 BIN_PATH = ./bin
 
+RPCOBJECTS = master.pb.o master.grpc.pb.o worker.pb.o worker.grpc.pb.o
+
 vpath %.proto $(PROTO_PATH)
 vpath %.cc ${RPC_PATH} ./src/master ./src/worker
 
 all: master worker
 
-master:	master.pb.o master.grpc.pb.o master.o
+master:	$(RPCOBJECTS) master.o masterImpl.o
 	$(CXX) $^ $(LDFLAGS) -o $(BIN_PATH)/$@
 
-worker: master.pb.o master.grpc.pb.o worker.o
+worker: $(RPCOBJECTS) worker.o workerImpl.o
 	${CXX} $^ ${LDFLAGS} -o $(BIN_PATH)/$@
 
 .PRECIOUS: %.grpc.pb.cc
@@ -29,5 +31,6 @@ worker: master.pb.o master.grpc.pb.o worker.o
 	$(PROTOC) -I $(PROTO_PATH) --cpp_out=$(RPC_PATH) $<
 
 .PHONY: clean
+clean:
 	rm *.o 
 

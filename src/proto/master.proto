@@ -3,12 +3,26 @@ syntax = "proto3";
 package master;
 
 service MasterService {
-    rpc Register (RegisterRequest) returns (RegisterResponse) {}
+    rpc Register (RegisterRequest) returns (RegisterReply) {}
+    rpc Barrier (BarrierRequest) returns (BarrierReply) {}
 }
 
 message RegisterRequest {
     string ClientAddr = 1;  
 }
 
-message RegisterResponse {
+message RegisterReply {
+}
+
+message BarrierRequest {
+    string WorkerAddr = 1;
+    uint64 RoundNo = 2;    
+}
+
+message BarrierReply {
+    enum BarrierStatus {
+        OK = 0;
+        ERROR = 1;
+    }
+    BarrierStatus status = 1;
 }
