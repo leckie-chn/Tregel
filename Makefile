@@ -32,5 +32,5 @@ worker: $(RPCOBJECTS) worker.o workerImpl.o
 
 .PHONY: clean
 clean:
-	rm *.o 
+	-rm *.o 
 

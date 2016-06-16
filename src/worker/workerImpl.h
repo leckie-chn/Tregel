@@ -10,12 +10,18 @@
 
 class WorkerImpl final : public worker::WorkerService::Service {
     private:
-        const std::string maddr_;   // Address of Master
-        const std::string addrme_;
-        const std::unique_ptr<master::MasterService::Stub> stub_;
+        std::string mAddr_;   // Address of Master
+        std::string hAddr_;
+        std::unique_ptr<master::MasterService::Stub> stub_;
+
+        void LoadFromXML(const std::string &);
     public:
         // Initializer
-        WorkerImpl(const std::string &, const std::string &);
+        WorkerImpl(const std::string &);
+
+        inline const std::string GetServiceAddr() const {
+            return hAddr_;
+        }
 
         grpc::Status StartTask(grpc::ServerContext *,
                 const worker::StartRequest *,

@@ -17,15 +17,10 @@ using std::unique_ptr;
 
 int main(int argc, char **argv) {
 
-    string master_port(argv[1]);
-    string worker_port(argv[2]);
-    string masteraddr = "162.105.146.42:" + master_port;
-    string workeraddr = "162.105.146.42:" + worker_port;
-    
-    WorkerImpl service(masteraddr, workeraddr);
+    WorkerImpl service(argv[1]);
     ServerBuilder builder;
-    builder.AddListeningPort(workeraddr, InsecureServerCredentials());
-    builder.RegisterService(workeraddr, &service);
+    builder.AddListeningPort(service.GetServiceAddr(), InsecureServerCredentials());
+    builder.RegisterService(&service);
     unique_ptr<Server> server(builder.BuildAndStart());
 
     server->Wait();

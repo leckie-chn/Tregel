@@ -7,14 +7,13 @@
 
 #include <grpc++/grpc++.h>
 #include <string>
-#include <vector>
+#include <map>
 
 #include <pthread.h>
 
 
 class MasterImpl final : public master::MasterService::Service {
     private:
-        const int workerN_;
 
         // Client on Worker Node
         class WorkerC {
@@ -24,13 +23,23 @@ class MasterImpl final : public master::MasterService::Service {
                 WorkerC(const std::string &);
         };
 
+        // mutex for Workers_
         pthread_mutex_t mtxWorkers_;
-        std::vector<std::unique_ptr<WorkerC>> Workers_;
+        // using `unique_ptr<WorkerC>` instead of `WorkerC` because of `unique_ptr<Stub>`
+        std::map<std::string, std::unique_ptr<WorkerC>> Workers_;
 
-        void StartJob();        
+        unsigned unRegWorkerN_;
+        std::string servAddr_;
+
+        void StartJobs();        
+        void LoadFromXML(const std::string &);
 
     public:
-        MasterImpl(int);
+        MasterImpl(const std::string &);
+
+        inline const std::string & GetServiceAddr() const {
+            return servAddr_;
+        }
 
         grpc::Status Register(grpc::ServerContext *,
                 const master::RegisterRequest *,

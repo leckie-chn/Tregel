@@ -16,10 +16,10 @@ using grpc::string;
 
 int main(int argc, char **argv) {
 
-    MasterImpl service(10);
+    // load configure file from xml
+    MasterImpl service(argv[1]);
     ServerBuilder builder;
-    const string ListeningAddr = "0.0.0.0:" + string(argv[1]);
-    builder.AddListeningPort(ListeningAddr, InsecureServerCredentials());
+    builder.AddListeningPort(service.GetServiceAddr(), InsecureServerCredentials());
     builder.RegisterService(&service);
     std::unique_ptr<Server> server(builder.BuildAndStart());
     server->Wait();
