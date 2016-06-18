@@ -1,9 +1,9 @@
 #ifndef _MASTERIMPL_H
 #define _MASTERIMPL_H
 
-#include "../rpc/master.grpc.pb.h"
-#include "../rpc/master.pb.h"
-#include "../rpc/worker.grpc.pb.h"
+#include "master.grpc.pb.h"
+#include "master.pb.h"
+#include "worker.grpc.pb.h"
 
 #include <grpc++/grpc++.h>
 #include <string>

@@ -2,7 +2,7 @@
 #include <string>
 #include <grpc++/grpc++.h>
 
-#include "../rpc/master.grpc.pb.h"
+#include "master.grpc.pb.h"
 #include "workerImpl.h"
 
 using grpc::ServerBuilder;

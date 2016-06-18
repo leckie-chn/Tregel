@@ -2,8 +2,8 @@
 
 #include <grpc++/grpc++.h>
 
-#include "../rpc/master.grpc.pb.h"
-#include "../rpc/master.pb.h"
+#include "master.grpc.pb.h"
+#include "master.pb.h"
 #include "masterImpl.h"
 
 using grpc::Status;

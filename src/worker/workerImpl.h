@@ -2,9 +2,9 @@
 #define _WORKERIMPL_H
 
 
-#include "../rpc/worker.pb.h"
-#include "../rpc/worker.grpc.pb.h"
-#include "../rpc/master.grpc.pb.h"
+#include "worker.pb.h"
+#include "worker.grpc.pb.h"
+#include "master.grpc.pb.h"
 
 #include <string>
 

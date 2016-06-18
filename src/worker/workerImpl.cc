@@ -8,7 +8,7 @@
 #include <boost/foreach.hpp>
 
 
-#include "../rpc/master.pb.h"
+#include "master.pb.h"
 
 using grpc::ServerContext;
 using grpc::Status;
