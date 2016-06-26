@@ -3,37 +3,60 @@ syntax = "proto3";
 package worker;
 
 service WorkerService {
+    // Master call StartTask -> workers when all workers are ready 
+    // Workers load Graph data, then call Barrier(0) -> Master
+    // Main Body of the Graph Algorithm runs here
     rpc StartTask (StartRequest) returns (StartReply) {}    
+
+    // Worker Call PushModel -> each other to sync graph parameter
+    // if timeout, try next peer
+    // call Barrier(this round) -> Master when done all pushing
+    // if a peer recovers from failure, repush
     rpc PushModel (PushRequest) returns (PushReply) {}
+
+    // Master call InformNewPeer -> existing workers when a new worker calls Register -> Master 
+    // Old workers connect to the new peer
+    rpc InformNewPeer (InformRequest) returns (InformReply) {}
 }
 
 message StartRequest {
-    map<uint64, uint64> VertexPartition = 1;
+    // vertex partition of workers (sequential), map: workeraddr -> first vertex number
+    map<string, uint64> VertexPartition = 1;
+    // Name of Graph data file
+    string GraphName = 2;
 }
 
 message StartReply {
     enum PartitionStatus {
         OK = 0;
-        ERROR = 1;
+        ERRNODATA = 1;  // worker can't find corresponding data on local machine
     }
     PartitionStatus status = 1;
 }
 
+// the update values of graph model
 message GraphModel {
     map<uint64, float> VertexValues = 1;
 }
 
 message PushRequest {
+    // who is pushing 
     string WorkerAddr = 1;
+    // Round Number of Graph Parameter being pushed
     uint64 RountNo = 2;
+    // content of the model
     GraphModel model = 3;
 }
 
 message PushReply {
     enum PushStatus {
         OK = 0;
-        ERROR = 1;
+        // Wrong Number pushed
+        ERRWRONGRD = 1;
     }
     PushStatus status = 1;
+
+    // optional Correct Round Number, if status == ERRWRONGRD
+    optional int64 CorrectRoundNo = 2;
 }
 
