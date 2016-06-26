@@ -12,6 +12,7 @@ message RegisterRequest {
 }
 
 message RegisterReply {
+    repeated string workerAddrs = 1;
 }
 
 message BarrierRequest {

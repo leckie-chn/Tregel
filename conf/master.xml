@@ -1,0 +1,16 @@
+<configure>
+    <host>0.0.0.0</host>
+    <port>50051</port>
+    <workers>
+        <worker>162.105.146.42:50060</worker>
+        <worker>162.105.146.42:50061</worker>
+        <worker>162.105.146.42:50062</worker>
+        <worker>162.105.146.42:50063</worker>
+        <worker>162.105.146.42:50064</worker>
+        <worker>162.105.146.42:50065</worker>
+        <worker>162.105.146.42:50066</worker>
+        <worker>162.105.146.42:50067</worker>
+        <worker>162.105.146.42:50068</worker>
+        <worker>162.105.146.42:50069</worker>
+    </workers>
+</configure>

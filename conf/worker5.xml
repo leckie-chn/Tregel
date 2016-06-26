@@ -1,0 +1,5 @@
+<configure>
+    <host>162.105.146.42</host>
+    <port>50065</port>
+    <master>162.105.146.42:50051</master>
+</configure>
