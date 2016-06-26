@@ -6,6 +6,7 @@ service WorkerService {
     // Master call StartTask -> workers when all workers are ready 
     // Workers load Graph data, then call Barrier(0) -> Master
     // Main Body of the Graph Algorithm runs here
+    
     rpc StartTask (StartRequest) returns (StartReply) {}    
 
     // Worker Call PushModel -> each other to sync graph parameter
@@ -15,7 +16,7 @@ service WorkerService {
     rpc PushModel (PushRequest) returns (PushReply) {}
 
     // Master call InformNewPeer -> existing workers when a new worker calls Register -> Master 
-    // Old workers connect to the new peer
+    // Old workers must connect to the new peer
     rpc InformNewPeer (InformRequest) returns (InformReply) {}
 }
 

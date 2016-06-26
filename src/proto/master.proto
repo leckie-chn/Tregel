@@ -20,6 +20,8 @@ service MasterService {
 message RegisterRequest {
     // who is registering
     string ClientAddr = 1;  
+    // if the caller worker is recovered from failure
+    bool Reboot = 2;
 }
 
 message RegisterReply {
