@@ -27,7 +27,6 @@
 
 ## Code
 * To create/modify a RPC service, create/modify `.proto` file under `src/proto` directory
-* Then run `make XXX.grpc.pb.cc XXX.pb.cc` to generate C++ code under `src/rpc` directory
 
 ## Build
 ```
