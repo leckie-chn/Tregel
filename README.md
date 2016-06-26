@@ -2,7 +2,7 @@
 
 * Yan Ni <niyan.ny@pku.edu.cn>
 * Shouyang Li
-* Jinan Ni<nijinan@pku.edu.cn>
+* Jinan Ni <nijinan@pku.edu.cn>
 
 
 
