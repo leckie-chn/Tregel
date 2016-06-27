@@ -54,6 +54,10 @@ Status WorkerImpl::PushModel(ServerContext *ctxt, const PushRequest *req, PushRe
     return Status::OK;
 }
 
+Status WorkerImpl::InformNewPeer(ServerContext *ctxt, const InformRequest * req, InformReply *reply){
+    return Status::OK;
+}
+
 void WorkerImpl::LoadFromXML(const string & xmlflname) {
     ptree pt;
     read_xml(xmlflname, pt);
@@ -63,4 +67,30 @@ void WorkerImpl::LoadFromXML(const string & xmlflname) {
     hAddr_ = host + ":" + port;
   
     mAddr_ = pt.get<string>("configure.master");
+}
+
+void loadFromDisk(std::map<int, float> & nodes, std::map<int, int> & edges){
+    FILE *fp = fopen("node.txt","r");
+    while (!feof(fp)){
+        int x;
+        float y;
+        fscanf(fp,"%d %f",&x, &y);
+        nodes[x] = y;
+    }
+    fclost(fp);
+    *fp = fopen("edge.txt","r");
+    while (!feof(fp)){
+        int x,y;
+        fscanf(fp,"%d %d",&x, &y);
+        edges[x] = y;
+    }
+    fclost(fp);    
+}
+
+void writeToDisk(const std::map<int, float> & nodes){
+    FILE *fp = fopen("node.txt","w");
+    std::map<int,float>::iterator it;
+    for (it=nodes.begin(); it!=nodes.end(); it++)
+        fprintf(fp,"%d %d", it->first, it->second);
+    fclost(fp);
 }

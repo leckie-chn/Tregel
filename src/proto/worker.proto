@@ -61,3 +61,10 @@ message PushReply {
     optional int64 CorrectRoundNo = 2;
 }
 
+message InformRequest {
+
+}
+
+message InformReply {
+
+}

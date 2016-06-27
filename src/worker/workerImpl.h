@@ -14,7 +14,11 @@ class WorkerImpl final : public worker::WorkerService::Service {
         std::string hAddr_;
         std::unique_ptr<master::MasterService::Stub> stub_;
 
+        std::map<int, float> nodes;
+        std::map<int, int> edges;
         void LoadFromXML(const std::string &);
+        void loadFromDisk(std::map<int, float> &, std::map<int, int> &);
+        void writeToDisk(const std::map<int, float> &);
     public:
         // Initializer
         WorkerImpl(const std::string &);
@@ -29,7 +33,9 @@ class WorkerImpl final : public worker::WorkerService::Service {
         grpc::Status PushModel(grpc::ServerContext *,
                 const worker::PushRequest *,
                 worker::PushReply *) override;
-
+        grpc::Status InformNewPeer(grpc::ServerContext *,
+                const worker::InformRequest *,
+                worker::InformReply *) override;
 };
 
 #endif
