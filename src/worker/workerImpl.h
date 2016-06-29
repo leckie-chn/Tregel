@@ -24,6 +24,7 @@ class WorkerImpl final : public worker::WorkerService::Service {
         std::unique_ptr<master::MasterService::Stub> stub_;
         int startid;
         int endid;
+        int version;
         
         std::map<int, float> nodes;
         std::map<int, float> local_nodes;

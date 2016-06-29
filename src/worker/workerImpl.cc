@@ -79,7 +79,16 @@ bool WorkerImpl::pull(WorkerC & c){
     PullReply reply;
     ClientContext context;
     c.stub_->PullModel(&context, request, &reply);
-    return reply.status() == PullReply::OK;
+    if (reply.status() == PullReply::OK){
+        auto mp = reply.model();
+        for (auto it = mp.begin();it != mp.end(); it++){
+            int x = it->first;
+            float y = it->second;
+            nodes[x] = y;
+        }
+        return true;
+    }
+    return false;
 }
 
 void WorkerImpl::page_rank(){
