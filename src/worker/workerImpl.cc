@@ -5,26 +5,14 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
 
 
 #include "master.pb.h"
 
-using grpc::ServerContext;
-using grpc::Status;
-using grpc::ClientContext;
-using worker::StartRequest;
-using worker::StartReply;
-using worker::PushRequest;
-using worker::PushReply;
-using master::RegisterRequest;
-using master::RegisterReply;
-using master::MasterService;
-
-using std::string;
-using std::unique_ptr;
-using std::cout;
-using std::endl;
+using namespace grpc;
+using namespace worker;
+using namespace master;
+using namespace std;
 
 using boost::property_tree::ptree;
 
@@ -34,19 +22,30 @@ WorkerImpl::WorkerImpl(const string & initfl) {
         ClientContext context;
 
         LoadFromXML(initfl);
-        stub_ = MasterService::NewStub(grpc::CreateChannel(mAddr_, grpc::InsecureChannelCredentials()));
+        mStub_ = MasterService::NewStub(CreateChannel(mAddr_, InsecureChannelCredentials()));
 
         request.set_clientaddr(hAddr_);
-        stub_->Register(&context, request, &reply);
+        mStub_->Register(&context, request, &reply);
 
     }
 
-Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, StartReply *reply) {
-    const auto iter = req->vertexpartition().begin();
-    if (iter == req->vertexpartition().end())
-        cout << "StartTask: Error No value" << endl;
-    else
-        cout << "StartTask(" << iter->first << "," << iter->second << ")" << endl;
+Status WorkerImpl::StartTask(ServerContext *_ctxt, const StartRequest *_req, StartReply *_reply) {
+    for (auto iter = _req->vertexpartition().begin(); iter != _req->vertexpartition().end(); iter++)
+        if (iter->first == hAddr_) {
+            // this worker
+            vertexb_ = iter->second;
+        } else {
+            // other workers
+            prStubs_[iter->first] = WorkerService::NewStub(CreateChannel(iter->first, InsecureChannelCredentials()));
+        }
+
+    ClientContext context;
+    BarrierRequest request;
+    BarrierReply reply;
+    request.set_workeraddr(hAddr_);
+    request.set_roundno(0);
+    mStub_->Barrier(&context, request, &reply);
+
     return Status::OK;
 }
 

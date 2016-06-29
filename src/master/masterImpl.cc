@@ -7,24 +7,14 @@
 #include <boost/foreach.hpp>
 
 
-using master::MasterService;
-using master::RegisterRequest;
-using master::RegisterReply;
-using master::BarrierRequest;
-using master::BarrierReply;
-using worker::WorkerService;
-using worker::StartRequest;
-using worker::StartReply;
-using grpc::ServerContext;
-using grpc::Status;
-using grpc::Channel;
-using grpc::CreateChannel;
-using grpc::ClientContext;
-using grpc::InsecureChannelCredentials;
+
 using boost::property_tree::ptree;
 
 using namespace std;
 using namespace std::chrono;
+using namespace grpc;
+using namespace worker;
+using namespace master;
 
 
 MasterImpl::WorkerC::WorkerC(const string & _addr):
@@ -54,6 +44,9 @@ Status MasterImpl::Register(ServerContext *_ctxt,
 Status MasterImpl::Barrier(ServerContext *_ctxt,
         const BarrierRequest *_req,
         BarrierReply *_reply) {
+
+    cout << "Worker " << _req->workeraddr() << "Round " << _req->roundno() << "\tStart" << endl;
+
     return Status::OK;
 }
 
@@ -79,16 +72,18 @@ void MasterImpl::StartJobs() {
     unsigned cnt = 0;
 
     for (auto & iter : Workers_) {
+        request.add_workeraddrs(iter.first);
+        (*request.mutable_vertexpartition())[iter.first] = cnt++;
+    }
+
+    for (auto & iter : Workers_) {
         auto & worker = iter.second;
         cout << "Invoking Client " << worker->addr_ << endl;
         ClientContext context;
         StartReply reply;
 
         context.set_deadline(system_clock::time_point(system_clock::now() + seconds(5)));
-        (*request.mutable_vertexpartition())[cnt] = cnt;
-        cnt++;
         worker->stub_->StartTask(&context, request, &reply);
-        request.clear_vertexpartition();
     }
 
     return;

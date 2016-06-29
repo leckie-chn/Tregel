@@ -19,7 +19,7 @@ class MasterImpl final : public master::MasterService::Service {
         class WorkerC {
             public:
                 const std::string addr_;
-                const std::unique_ptr<worker::WorkerService::Stub> stub_;
+                std::unique_ptr<worker::WorkerService::Stub> stub_;
                 WorkerC(const std::string &);
         };
 

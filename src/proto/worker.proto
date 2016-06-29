@@ -8,7 +8,8 @@ service WorkerService {
 }
 
 message StartRequest {
-    map<uint64, uint64> VertexPartition = 1;
+    map<string, uint64> VertexPartition = 1;
+    repeated string WorkerAddrs = 2;
 }
 
 message StartReply {
