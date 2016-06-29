@@ -18,9 +18,15 @@ class WorkerImpl final : public worker::WorkerService::Service {
         std::map<std::string, std::unique_ptr<worker::WorkerService::Stub> > prStubs_;    // RPC Stub on Peer Workers
 
         uint64_t vertexb_;   // beginning of vertex range
-        // uint64_t vertexe;   // end of vertex range
 
         inline void LoadFromXML(const std::string &);
+        bool flag[];
+        
+        std::map<int, float> nodes;
+        std::map<int, int> edges;
+        void LoadFromXML(const std::string &);
+        void loadFromDisk(std::map<int, float> &, std::map<int, int> &);
+        void writeToDisk(std::map<int, float> &);
     public:
         // Initializer
         WorkerImpl(const std::string &);
@@ -35,7 +41,9 @@ class WorkerImpl final : public worker::WorkerService::Service {
         grpc::Status PushModel(grpc::ServerContext *,
                 const worker::PushRequest *,
                 worker::PushReply *) override;
-
+        grpc::Status InformNewPeer(grpc::ServerContext *,
+                const worker::InformRequest *,
+                worker::InformReply *) override;
 };
 
 #endif

@@ -3,20 +3,41 @@ syntax = "proto3";
 package master;
 
 service MasterService {
+    // Worker call Register -> Master when a worker is started / recovered from failure
+    // Master then 
+    //      1. tell the new worker to connect all old workers
+    //      2. tell the all the old workers to connect the new worker
     rpc Register (RegisterRequest) returns (RegisterReply) {}
+
+    // Worker call Barrier -> Master when 
+    //      1. Done preparing 1st Round and propose to begin the computing
+    //      2. Done Computing Round X & has pushed all updated parameters to other workers
+    //      3. Recover from a failure with computed Round X
+    // Master replies to all workers when all of them has done Round X and called Barrier
     rpc Barrier (BarrierRequest) returns (BarrierReply) {}
 }
 
 message RegisterRequest {
+    // who is registering
     string ClientAddr = 1;  
+    // if the caller worker is recovered from failure
+    bool Reboot = 2;
 }
 
 message RegisterReply {
+    // the peer workers that has already registered (excluding the caller itself)
+    repeated string workerAddrs = 1;
 }
 
 message BarrierRequest {
+    // the worker who is calling for barrier
     string WorkerAddr = 1;
+
+    // the Barrier Round Number they are syncing
     uint64 RoundNo = 2;    
+
+    // if the corresponding part of Graph Parameter has converged 
+    bool Converge = 3;
 }
 
 message BarrierReply {
@@ -25,4 +46,8 @@ message BarrierReply {
         ERROR = 1;
     }
     BarrierStatus status = 1;
+
+    // if all the Graph Parameter has converged
+    bool Done = 2;
 }
+
