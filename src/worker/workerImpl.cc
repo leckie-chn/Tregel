@@ -37,10 +37,16 @@ WorkerImpl::WorkerImpl(const string & initfl) {
     }
 
 Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, StartReply *reply_) {
+    for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
+        int x = it->first;
+        int y = it->second;
+        if ((x >= startid) && (x < endid)){
+            nodes[x] = y;
+        }
+    }
     int sent_cnt = 10;
     while (sent_cnt){
-        map<std::string, std::unique_ptr<WorkerC>>::iterator iter;
-        for (iter = Workers_.begin(); iter != Workers_.end(); iter++){
+        for (auto iter = Workers_.begin(); iter != Workers_.end(); iter++){
             if (!(iter->second)->hasmodel){
                 if (pull(*(iter->second.get()))) sent_cnt--;
             }
@@ -60,8 +66,7 @@ Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, Start
 
 Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply_) {
     reply_->clear_model();
-    map<int,float>::iterator it;
-    for (it = nodes.begin(); it!=nodes.end(); it++){
+    for (auto it = nodes.begin(); it!=nodes.end(); it++){
         (*(reply_->mutable_model()))[it->first] = it->second;
     }
     
@@ -92,7 +97,17 @@ bool WorkerImpl::pull(WorkerC & c){
 }
 
 void WorkerImpl::page_rank(){
-
+    for (auto it = local_nodes.begin(); it != local_nodes.end(); it++){
+        int x = it->first;
+        auto v = edges[x];
+        float score = 0;
+        int tot = v.size();
+        for (auto it = v.begin(); it != v.end(); it++){
+            int y = *it;
+            score += float(nodes[y])/out_degree[y];
+        }
+        local_nodes[x] = score;
+    }
 }
 
 void WorkerImpl::LoadFromXML(const string & xmlflname) {
@@ -114,10 +129,7 @@ void WorkerImpl::loadFromDisk(map<int, float> & nodes, std::map<int, std::vector
         int x;
         float y;
         fscanf(fp,"%d %f",&x, &y);
-        nodes[x] = y;
-        if ((x >= startid) && (x < endid)){
-            local_nodes[x] = y;
-        }
+        local_nodes[x] = y;
     }
     fclose(fp);
     fp = fopen("graph.txt","r");
@@ -132,8 +144,7 @@ void WorkerImpl::loadFromDisk(map<int, float> & nodes, std::map<int, std::vector
 
 void WorkerImpl::writeToDisk(map<int, float> & nodes){
     FILE *fp = fopen("node.txt","w");
-    map<int,float>::iterator it;
-    for (it = nodes.begin(); it!=nodes.end(); it++){
+    for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
         if ((it -> first >= startid) && (it->first < endid))
             fprintf(fp,"%d %f", it->first, it->second);
     }
