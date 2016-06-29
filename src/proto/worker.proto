@@ -62,9 +62,14 @@ message PushReply {
 }
 
 message InformRequest {
-
+	string WorkerAddr = 1;
 }
 
 message InformReply {
-
+    enum InformStatus {
+        OK = 0;
+        // Wrong Number pushed
+        ERRWRONGRD = 1;
+    }
+    InformStatus status = 1;	
 }

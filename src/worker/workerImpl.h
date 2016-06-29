@@ -13,12 +13,14 @@ class WorkerImpl final : public worker::WorkerService::Service {
         std::string mAddr_;   // Address of Master
         std::string hAddr_;
         std::unique_ptr<master::MasterService::Stub> stub_;
-
+        std::unique_ptr<worker::WorkerService::Stub> stubs_[10];
+        bool flag[];
+        
         std::map<int, float> nodes;
         std::map<int, int> edges;
         void LoadFromXML(const std::string &);
         void loadFromDisk(std::map<int, float> &, std::map<int, int> &);
-        void writeToDisk(const std::map<int, float> &);
+        void writeToDisk(std::map<int, float> &);
     public:
         // Initializer
         WorkerImpl(const std::string &);
