@@ -8,8 +8,9 @@
 #include <grpc++/grpc++.h>
 #include <string>
 #include <map>
-
 #include <pthread.h>
+
+#include "src/util/XmlLoader.h"
 
 
 class MasterImpl final : public master::MasterService::Service {
@@ -23,16 +24,18 @@ class MasterImpl final : public master::MasterService::Service {
                 WorkerC(const std::string &);
         };
 
+        XmlLoader conf_;
+        const std::string servAddr_;
+
         // mutex for Workers_
         pthread_mutex_t mtxWorkers_;
         // using `unique_ptr<WorkerC>` instead of `WorkerC` because of `unique_ptr<Stub>`
         std::map<std::string, std::unique_ptr<WorkerC>> Workers_;
 
-        unsigned unRegWorkerN_;
-        std::string servAddr_;
+        // Private Methods
+        // Start Tasks, in a POSIX thread
 
-        void StartJobs();        
-        void LoadFromXML(const std::string &);
+
 
     public:
         MasterImpl(const std::string &);

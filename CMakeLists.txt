@@ -9,6 +9,9 @@ find_package(Protobuf REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
 
+include_directories(${PROJECT_SOURCE_DIR})
+
 add_subdirectory(src/master)
 add_subdirectory(src/worker)
 add_subdirectory(src/proto)
+add_subdirectory(src/util)

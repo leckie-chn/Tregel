@@ -7,26 +7,33 @@
 #include "master.grpc.pb.h"
 
 #include <string>
-#include <map>
-#include <cstdint>
 
 class WorkerImpl final : public worker::WorkerService::Service {
     private:
+        class WorkerC {
+            public:
+                const std::string addr_;
+                std::unique_ptr<worker::WorkerService::Stub> stub_;
+                WorkerC(const std::string &);
+                bool hasmodel = false;
+        };
+
+        std::map<std::string, std::unique_ptr<WorkerC>> Workers_;
         std::string mAddr_;   // Address of Master
         std::string hAddr_;
-        std::unique_ptr<master::MasterService::Stub> mStub_;            // RPC Stub on Master
-        std::map<std::string, std::unique_ptr<worker::WorkerService::Stub> > prStubs_;    // RPC Stub on Peer Workers
-
-        uint64_t vertexb_;   // beginning of vertex range
-
-        inline void LoadFromXML(const std::string &);
-        bool flag[];
+        std::unique_ptr<master::MasterService::Stub> stub_;
+        int startid;
+        int endid;
         
         std::map<int, float> nodes;
-        std::map<int, int> edges;
+        std::map<int, float> local_nodes;
+        std::map<int, std::vector<int>> edges;
+        std::map<int, int> out_degree;
         void LoadFromXML(const std::string &);
-        void loadFromDisk(std::map<int, float> &, std::map<int, int> &);
+        void loadFromDisk(std::map<int, float> &, std::map<int, std::vector<int>> &);
         void writeToDisk(std::map<int, float> &);
+        void page_rank();
+        bool pull(WorkerC &);
     public:
         // Initializer
         WorkerImpl(const std::string &);
@@ -38,9 +45,9 @@ class WorkerImpl final : public worker::WorkerService::Service {
         grpc::Status StartTask(grpc::ServerContext *,
                 const worker::StartRequest *,
                 worker::StartReply *) override;
-        grpc::Status PushModel(grpc::ServerContext *,
-                const worker::PushRequest *,
-                worker::PushReply *) override;
+        grpc::Status PullModel(grpc::ServerContext *,
+                const worker::PullRequest *,
+                worker::PullReply *) override;
         grpc::Status InformNewPeer(grpc::ServerContext *,
                 const worker::InformRequest *,
                 worker::InformReply *) override;

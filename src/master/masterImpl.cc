@@ -22,19 +22,27 @@ MasterImpl::WorkerC::WorkerC(const string & _addr):
     stub_ (WorkerService::NewStub(CreateChannel(_addr, InsecureChannelCredentials()))) {
     }
 
-MasterImpl::MasterImpl(const string &initfl):mtxWorkers_(PTHREAD_MUTEX_INITIALIZER){
-    LoadFromXML(initfl);
+MasterImpl::MasterImpl(const string &confxml):
+        mtxWorkers_(PTHREAD_MUTEX_INITIALIZER),
+        conf_(confxml),
+        servAddr_(conf_.GetMasterAddr()){
+    auto workers = conf_.GetWorkerConfs();
+    for (auto iter : workers) {
+        Workers_.insert(make_pair(iter.first, unique_ptr<WorkerC>()));
+    }
 }
 
 Status MasterImpl::Register(ServerContext *_ctxt,
         const RegisterRequest *_req,
         RegisterReply *_reply) {
 
+    static int unRegWorkerN = Workers_.size();
+
     pthread_mutex_lock(&mtxWorkers_);
     const std::string & caddr = _req->clientaddr();
     Workers_[caddr].reset(new WorkerC(caddr));
-    if (--unRegWorkerN_ == 0) {
-        StartJobs();
+    if (--unRegWorkerN == 0) {
+        // TODO: Start Tasks in an async manner
     }
     pthread_mutex_unlock(&mtxWorkers_);
 
@@ -50,41 +58,5 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
     return Status::OK;
 }
 
-void MasterImpl::LoadFromXML(const string &xmlname) {
-    ptree pt;
-    read_xml(xmlname, pt);
-    string host = pt.get<string>("configure.host");
-    string port = pt.get<string>("configure.port");
-    servAddr_ = host + ":" + port;
-    BOOST_FOREACH(ptree::value_type &v,
-            pt.get_child("configure.workers")) {
-        string waddr = v.second.data();
-        Workers_[waddr] = nullptr;
-    }
-    unRegWorkerN_ = Workers_.size();
 
-    return;
-}
 
-void MasterImpl::StartJobs() {
-    cout << "Register Done" << endl;
-    StartRequest request;
-    unsigned cnt = 0;
-
-    for (auto & iter : Workers_) {
-        request.add_workeraddrs(iter.first);
-        (*request.mutable_vertexpartition())[iter.first] = cnt++;
-    }
-
-    for (auto & iter : Workers_) {
-        auto & worker = iter.second;
-        cout << "Invoking Client " << worker->addr_ << endl;
-        ClientContext context;
-        StartReply reply;
-
-        context.set_deadline(system_clock::time_point(system_clock::now() + seconds(5)));
-        worker->stub_->StartTask(&context, request, &reply);
-    }
-
-    return;
-}

@@ -5,16 +5,23 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
 
 
 #include "master.pb.h"
-
 using namespace grpc;
 using namespace worker;
 using namespace master;
 using namespace std;
+using namespace std::chrono;
 
 using boost::property_tree::ptree;
+
+
+WorkerImpl::WorkerC::WorkerC(const string & _addr):
+    addr_ (_addr),
+    stub_ (WorkerService::NewStub(CreateChannel(_addr, grpc::InsecureChannelCredentials()))) {
+    }
 
 WorkerImpl::WorkerImpl(const string & initfl) {
         RegisterRequest request;
@@ -22,36 +29,61 @@ WorkerImpl::WorkerImpl(const string & initfl) {
         ClientContext context;
 
         LoadFromXML(initfl);
-        mStub_ = MasterService::NewStub(CreateChannel(mAddr_, InsecureChannelCredentials()));
+        stub_ = MasterService::NewStub(grpc::CreateChannel(mAddr_, grpc::InsecureChannelCredentials()));
 
         request.set_clientaddr(hAddr_);
         stub_->Register(&context, request, &reply);
         loadFromDisk(nodes, edges);
     }
 
-Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, StartReply *reply) {
-    const auto iter = req->vertexpartition().begin();
-    if (iter == req->vertexpartition().end())
-        cout << "StartTask: Error No value" << endl;
-    else
-        cout << "StartTask(" << iter->first << "," << iter->second << ")" << endl;
-    //stub_ = MasterService::NewStub(grpc::CreateChannel(mAddr_, grpc::InsecureChannelCredentials()));
-    int size = 10;
-    while (size){
-        
+Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, StartReply *reply_) {
+    int sent_cnt = 10;
+    while (sent_cnt){
+        map<std::string, std::unique_ptr<WorkerC>>::iterator iter;
+        for (iter = Workers_.begin(); iter != Workers_.end(); iter++){
+            if (!(iter->second)->hasmodel){
+                if (pull(*(iter->second.get()))) sent_cnt--;
+            }
+        }
     }
+    page_rank();
+    BarrierRequest request;
+    BarrierReply reply;
+    ClientContext context;
+    context.set_deadline(system_clock::time_point(system_clock::now() + seconds(5)));
+    request.set_workeraddr(hAddr_);
+    stub_->Barrier(&context, request, &reply);
     writeToDisk(nodes);
+    
     return Status::OK;
 }
 
-Status WorkerImpl::PushModel(ServerContext *ctxt, const PushRequest *req, PushReply *reply) {
+Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply_) {
+    reply_->clear_model();
+    map<int,float>::iterator it;
+    for (it = nodes.begin(); it!=nodes.end(); it++){
+        (*(reply_->mutable_model()))[it->first] = it->second;
+    }
+    
     return Status::OK;
 }
 
-Status WorkerImpl::InformNewPeer(ServerContext *ctxt, const InformRequest * req, InformReply *reply){
-    stubs_[0] = WorkerService::NewStub(grpc::CreateChannel(req->workeraddr() ,grpc::InsecureChannelCredentials()));
+Status WorkerImpl::InformNewPeer(ServerContext *ctxt, const InformRequest * req, InformReply *reply_){
+    Workers_[req->workeraddr()].reset(new WorkerC(req->workeraddr()));
     //stubs_[0] = stub;
     return Status::OK;
+}
+
+bool WorkerImpl::pull(WorkerC & c){
+    PullRequest request;
+    PullReply reply;
+    ClientContext context;
+    c.stub_->PullModel(&context, request, &reply);
+    return reply.status() == PullReply::OK;
+}
+
+void WorkerImpl::page_rank(){
+
 }
 
 void WorkerImpl::LoadFromXML(const string & xmlflname) {
@@ -60,25 +92,31 @@ void WorkerImpl::LoadFromXML(const string & xmlflname) {
     
     string host = pt.get<string>("configure.host");
     string port = pt.get<string>("configure.port");
+    startid = pt.get<int>("configure.nodestart");
+    endid = pt.get<int>("configure.nodeend");
     hAddr_ = host + ":" + port;
   
     mAddr_ = pt.get<string>("configure.master");
 }
 
-void WorkerImpl::loadFromDisk(map<int, float> & nodes, map<int, int> & edges){
+void WorkerImpl::loadFromDisk(map<int, float> & nodes, std::map<int, std::vector<int>>& edges){
     FILE *fp = fopen("node.txt","r");
     while (!feof(fp)){
         int x;
         float y;
         fscanf(fp,"%d %f",&x, &y);
         nodes[x] = y;
+        if ((x >= startid) && (x < endid)){
+            local_nodes[x] = y;
+        }
     }
     fclose(fp);
     fp = fopen("graph.txt","r");
     while (!feof(fp)){
         int x,y;
         fscanf(fp,"%d %d",&x, &y);
-        edges[x] = y;
+        out_degree[x]++;
+        edges[x].push_back(y);
     }
     fclose(fp);    
 }
@@ -86,7 +124,9 @@ void WorkerImpl::loadFromDisk(map<int, float> & nodes, map<int, int> & edges){
 void WorkerImpl::writeToDisk(map<int, float> & nodes){
     FILE *fp = fopen("node.txt","w");
     map<int,float>::iterator it;
-    for (it = nodes.begin(); it!=nodes.end(); it++)
-        fprintf(fp,"%d %f", it->first, it->second);
+    for (it = nodes.begin(); it!=nodes.end(); it++){
+        if ((it -> first >= startid) && (it->first < endid))
+            fprintf(fp,"%d %f", it->first, it->second);
+    }
     fclose(fp);
 }

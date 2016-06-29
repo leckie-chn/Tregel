@@ -9,11 +9,11 @@ service WorkerService {
     
     rpc StartTask (StartRequest) returns (StartReply) {}    
 
-    // Worker Call PushModel -> each other to sync graph parameter
+    // Worker Call PullModel -> each other to sync graph parameter
     // if timeout, try next peer
-    // call Barrier(this round) -> Master when done all pushing
-    // if a peer recovers from failure, repush
-    rpc PushModel (PushRequest) returns (PushReply) {}
+    // call Barrier(this round) -> Master when done all Pulling
+    // if a peer recovers from failure, rePull
+    rpc PullModel (PullRequest) returns (PullReply) {}
 
     // Master call InformNewPeer -> existing workers when a new worker calls Register -> Master 
     // Old workers must connect to the new peer
@@ -22,7 +22,7 @@ service WorkerService {
 
 message StartRequest {
     // vertex partition of workers (sequential), map: workeraddr -> first vertex number
-    map<string, uint64> VertexPartition = 1;
+    map<string, int32> VertexPartition = 1;
     // Name of Graph data file
     string GraphName = 2;
 }
@@ -35,30 +35,24 @@ message StartReply {
     PartitionStatus status = 1;
 }
 
-// the update values of graph model
-message GraphModel {
-    map<uint64, float> VertexValues = 1;
-}
-
-message PushRequest {
-    // who is pushing 
+message PullRequest {
+    // who is Pulling 
     string WorkerAddr = 1;
-    // Round Number of Graph Parameter being pushed
-    uint64 RountNo = 2;
+    // Round Number of Graph Parameter being Pulled
+    int32 RountNo = 2;
     // content of the model
-    GraphModel model = 3;
 }
 
-message PushReply {
-    enum PushStatus {
+message PullReply {
+    enum PullStatus {
         OK = 0;
-        // Wrong Number pushed
+        // Wrong Number Pulled
         ERRWRONGRD = 1;
     }
-    PushStatus status = 1;
-
+    PullStatus status = 1;
+    map<int32, float> model = 2;
     // optional Correct Round Number, if status == ERRWRONGRD
-    optional int64 CorrectRoundNo = 2;
+    //optional int32 CorrectRoundNo = 2;
 }
 
 message InformRequest {
@@ -68,7 +62,7 @@ message InformRequest {
 message InformReply {
     enum InformStatus {
         OK = 0;
-        // Wrong Number pushed
+        // Wrong Number Pulled
         ERRWRONGRD = 1;
     }
     InformStatus status = 1;	
