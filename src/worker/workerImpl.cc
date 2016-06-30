@@ -49,7 +49,10 @@ Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, Start
         while (sent_cnt){
             for (auto iter = Workers_.begin(); iter != Workers_.end(); iter++){
                 if (!(iter->second)->hasmodel){
-                    if (pull(*(iter->second.get()))) sent_cnt--;
+                    if (pull(*(iter->second.get()))) {
+                        (iter->second)->hasmodel = true;
+                        sent_cnt--;
+                    }
                 }
             }
         }
@@ -70,7 +73,7 @@ Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullRe
     for (auto it = nodes.begin(); it!=nodes.end(); it++){
         (*(reply_->mutable_model()))[it->first] = it->second;
     }
-    
+    reply_->set_status(PullReply::OK);
     return Status::OK;
 }
 
@@ -84,8 +87,9 @@ bool WorkerImpl::pull(WorkerC & c){
     PullRequest request;
     PullReply reply;
     ClientContext context;
-    c.stub_->PullModel(&context, request, &reply);
-    if (reply.status() == PullReply::OK){
+    Status status = c.stub_->PullModel(&context, request, &reply);
+    if (status.ok()){
+    //if (reply.status() == PullReply::OK){
         auto mp = reply.model();
         for (auto it = mp.begin();it != mp.end(); it++){
             int x = it->first;
