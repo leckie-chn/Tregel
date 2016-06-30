@@ -4,6 +4,7 @@
 #include "master.grpc.pb.h"
 #include "master.pb.h"
 #include "worker.grpc.pb.h"
+#include "worker.pb.h"
 
 #include <grpc++/grpc++.h>
 #include <string>
@@ -21,6 +22,14 @@ class MasterImpl final : public master::MasterService::Service {
             public:
                 const std::string addr_;
                 std::unique_ptr<worker::WorkerService::Stub> stub_;
+
+                // Vars for Async StartTask
+                std::unique_ptr<grpc::ClientAsyncResponseReader<worker::StartReply> > taskrpc_;
+                worker::StartReply taskreply_;
+                grpc::Status taskstat_;
+                grpc::ClientContext taskcontext_;
+
+                // Constructor
                 WorkerC(const std::string &);
         };
 
@@ -34,6 +43,10 @@ class MasterImpl final : public master::MasterService::Service {
 
         // Private Methods
         // Start Tasks, in a POSIX thread
+        pthread_t jobpid_;
+        grpc::CompletionQueue jobcq_;
+        void startJob();
+        void stopJob();
 
 
 

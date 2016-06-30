@@ -36,13 +36,13 @@ Status MasterImpl::Register(ServerContext *_ctxt,
         const RegisterRequest *_req,
         RegisterReply *_reply) {
 
-    static int unRegWorkerN = Workers_.size();
-
     pthread_mutex_lock(&mtxWorkers_);
+    static int unRegWorkerN = Workers_.size();
     const std::string & caddr = _req->clientaddr();
     Workers_[caddr].reset(new WorkerC(caddr));
     if (--unRegWorkerN == 0) {
         // TODO: Start Tasks in an async manner
+        startJob();
     }
     pthread_mutex_unlock(&mtxWorkers_);
 
@@ -58,5 +58,28 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
     return Status::OK;
 }
 
+void MasterImpl::startJob() {
+    StartRequest request;
+    for (auto &iter : Workers_) {
+        auto &wcptr = iter.second;
+        wcptr->taskrpc_ = wcptr->stub_->AsyncStartTask(&wcptr->taskcontext_, request, &jobcq_);
+        wcptr->taskrpc_->Finish(&wcptr->taskreply_, &wcptr->taskstat_, (void*)1);
+    }
+}
 
+void MasterImpl::stopJob() {
+    int stopcnt = Workers_.size();
+    while (stopcnt > 0) {
+        void *tag;
+        bool ok = false;
+        jobcq_.Next(&tag, &ok);
+        if (ok) 
+            if (tag == (void *)1) {
+                stopcnt--;
+            }
+        else {
+            // TODO Something Wrong with Workers
+        }
+    }
 
+}
