@@ -9,7 +9,8 @@
 #include <grpc++/grpc++.h>
 #include <string>
 #include <map>
-#include <pthread.h>
+#include <condition_variable>
+#include <mutex>
 
 #include "src/util/XmlLoader.h"
 
@@ -29,6 +30,9 @@ class MasterImpl final : public master::MasterService::Service {
                 grpc::Status taskstat_;
                 grpc::ClientContext taskcontext_;
 
+                // Vars for Barrier Sync
+                bool roundbarrier_;
+
                 // Constructor
                 WorkerC(const std::string &);
         };
@@ -42,11 +46,17 @@ class MasterImpl final : public master::MasterService::Service {
         std::map<std::string, std::unique_ptr<WorkerC>> Workers_;
 
         // Private Methods
-        // Start Tasks, in a POSIX thread
-        pthread_t jobpid_;
+        // Start/Stop Tasks
         grpc::CompletionQueue jobcq_;
         void startJob();
         void stopJob();
+
+        // Round Sync Vars
+        int roundno_;
+        std::mutex syncmtx_;
+        std::unique_lock<std::mutex> synclk_;
+        std::condition_variable synccond_;
+        bool halt_;
 
 
 
