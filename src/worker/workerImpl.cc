@@ -72,7 +72,7 @@ Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, Start
 
 Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply_) {
     reply_->clear_model();
-    for (auto it = nodes.begin(); it!=nodes.end(); it++){
+    for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
         (*(reply_->mutable_model()))[it->first] = it->second;
     }
     reply_->set_status(PullReply::OK);
