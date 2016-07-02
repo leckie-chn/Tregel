@@ -44,32 +44,36 @@ Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, Start
             nodes[x] = y;
         }
     }
-    int sent_cnt = 10;
-    while (sent_cnt){
-        for (auto iter = Workers_.begin(); iter != Workers_.end(); iter++){
-            if (!(iter->second)->hasmodel){
-                if (pull(*(iter->second.get()))) sent_cnt--;
+    while (true){
+        int sent_cnt = 10;
+        while (sent_cnt){
+            for (auto iter = Workers_.begin(); iter != Workers_.end(); iter++){
+                if (!(iter->second)->hasmodel){
+                    if (pull(*(iter->second.get()))) {
+                        (iter->second)->hasmodel = true;
+                        sent_cnt--;
+                    }
+                }
             }
         }
+        page_rank();
+        BarrierRequest request;
+        BarrierReply reply;
+        ClientContext context;
+        context.set_deadline(system_clock::time_point(system_clock::now() + seconds(5)));
+        request.set_workeraddr(hAddr_);
+        writeToDisk(nodes);
+        stub_->Barrier(&context, request, &reply);    
     }
-    page_rank();
-    BarrierRequest request;
-    BarrierReply reply;
-    ClientContext context;
-    context.set_deadline(system_clock::time_point(system_clock::now() + seconds(5)));
-    request.set_workeraddr(hAddr_);
-    stub_->Barrier(&context, request, &reply);
-    writeToDisk(nodes);
-    
     return Status::OK;
 }
 
 Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply_) {
     reply_->clear_model();
-    for (auto it = nodes.begin(); it!=nodes.end(); it++){
+    for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
         (*(reply_->mutable_model()))[it->first] = it->second;
     }
-    
+    reply_->set_status(PullReply::OK);
     return Status::OK;
 }
 
@@ -83,8 +87,9 @@ bool WorkerImpl::pull(WorkerC & c){
     PullRequest request;
     PullReply reply;
     ClientContext context;
-    c.stub_->PullModel(&context, request, &reply);
-    if (reply.status() == PullReply::OK){
+    Status status = c.stub_->PullModel(&context, request, &reply);
+    if (status.ok()){
+    //if (reply.status() == PullReply::OK){
         auto mp = reply.model();
         for (auto it = mp.begin();it != mp.end(); it++){
             int x = it->first;
