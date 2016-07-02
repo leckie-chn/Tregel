@@ -40,8 +40,6 @@ class MasterImpl final : public master::MasterService::Service {
         XmlLoader conf_;
         const std::string servAddr_;
 
-        // mutex for Workers_
-        pthread_mutex_t mtxWorkers_;
         // using `unique_ptr<WorkerC>` instead of `WorkerC` because of `unique_ptr<Stub>`
         std::map<std::string, std::unique_ptr<WorkerC>> Workers_;
 
@@ -58,7 +56,8 @@ class MasterImpl final : public master::MasterService::Service {
         std::condition_variable synccond_;
         bool halt_;
 
-
+        // failure handling
+        void bcReboot(const std::string &);
 
     public:
         MasterImpl(const std::string &);

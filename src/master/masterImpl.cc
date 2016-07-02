@@ -24,7 +24,6 @@ MasterImpl::WorkerC::WorkerC(const string & _addr):
     }
 
 MasterImpl::MasterImpl(const string &confxml):
-    mtxWorkers_(PTHREAD_MUTEX_INITIALIZER),
     synclk_(syncmtx_),
     conf_(confxml),
     roundno_(0),
@@ -39,15 +38,29 @@ Status MasterImpl::Register(ServerContext *_ctxt,
         const RegisterRequest *_req,
         RegisterReply *_reply) {
 
-    pthread_mutex_lock(&mtxWorkers_);
     static int unRegWorkerN = Workers_.size();
     const std::string & caddr = _req->clientaddr();
-    Workers_[caddr].reset(new WorkerC(caddr));
-    if (--unRegWorkerN == 0) {
-        startJob();
-    }
-    pthread_mutex_unlock(&mtxWorkers_);
 
+    synclk_.lock();
+    Workers_[caddr].reset(new WorkerC(caddr));
+
+    if (_req->reboot()) {
+        if (Workers_.find(caddr) == Workers_.end()) {
+            // Error: Reboot Worker not found
+            synclk_.unlock();
+            return Status(StatusCode::NOT_FOUND, "Reboot Worker not found");
+        } else {
+            bcReboot(caddr);
+            StartRequest request;
+            unique_ptr<WorkerC> &wcptr = Workers_[caddr];
+            wcptr->taskrpc_ = wcptr->stub_->AsyncStartTask(&wcptr->taskcontext_, request, &jobcq_);
+            wcptr->taskrpc_->Finish(&wcptr->taskreply_, &wcptr->taskstat_, (void*)1);
+        }
+    } else if (--unRegWorkerN == 0) {
+            startJob();
+    }
+
+    synclk_.unlock();
     return Status::OK;
 }
 
@@ -61,15 +74,7 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
         return Status::OK;
     }
 
-    // Sync Workers on Barrier
-    bool allsync = true;
     synclk_.lock();
-    Workers_[_req->workeraddr()]->roundbarrier_ = true;
-    for (auto &iter : Workers_)
-        if (!iter.second->roundbarrier_) {
-            allsync = false;
-            break;
-        }
 
     // Compute halt_;
     if (roundno_ < _req->roundno()) {
@@ -78,6 +83,16 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
     }
     halt_ &= _req->converge();
 
+    // Block Workers on Barrier
+    bool allsync = true;
+    Workers_[_req->workeraddr()]->roundbarrier_ = true;
+    for (auto &iter : Workers_)
+        if (!iter.second->roundbarrier_) {
+            allsync = false;
+            break;
+        }
+
+    // release blocked workers on barrier
     if (allsync) {
         for (auto &iter : Workers_)
             iter.second->roundbarrier_ = false;
@@ -117,4 +132,15 @@ void MasterImpl::stopJob() {
             }
     }
 
+}
+
+void MasterImpl::bcReboot(const string &caddr) {
+    for (auto & iter : Workers_)
+        if (iter.first != caddr) {
+            ClientContext context;
+            InformRequest request;
+            InformReply reply;
+            request.set_workeraddr(caddr);
+            iter.second->stub_->InformNewPeer (&context, request, &reply);
+        }
 }
