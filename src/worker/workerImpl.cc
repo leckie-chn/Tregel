@@ -38,7 +38,7 @@ WorkerImpl::WorkerImpl(const string & initfl) {
         loadFromDisk(nodes, edges);
     }
 
-Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, StartReply *reply_) {
+Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, StartReply *reply) {
     loadFromDisk(nodes, edges);
     for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
         int x = it->first;
@@ -61,26 +61,26 @@ Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, Start
         }
         page_rank();
         BarrierRequest request;
-        BarrierReply reply;
+        BarrierReply breply;
         ClientContext context;
         context.set_deadline(system_clock::time_point(system_clock::now() + seconds(5)));
         request.set_workeraddr(hAddr);
         writeToDisk(nodes);
-        stub->Barrier(&context, request, &reply);    
+        stub->Barrier(&context, request, &breply);    
     }
     return Status::OK;
 }
 
-Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply_) {
-    reply_->clear_model();
+Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply) {
+    reply->clear_model();
     for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
-        (*(reply_->mutable_model()))[it->first] = it->second;
+        (*(reply->mutable_model()))[it->first] = it->second;
     }
-    reply_->set_status(PullReply::OK);
+    reply->set_status(PullReply::OK);
     return Status::OK;
 }
 
-Status WorkerImpl::InformNewPeer(ServerContext *ctxt, const InformRequest * req, InformReply *reply_){
+Status WorkerImpl::InformNewPeer(ServerContext *ctxt, const InformRequest * req, InformReply *reply){
     Workers[req->workeraddr()].reset(new WorkerC(req->workeraddr()));
     //stubs_[0] = stub;
     return Status::OK;
