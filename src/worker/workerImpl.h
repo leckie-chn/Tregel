@@ -26,6 +26,8 @@ class WorkerImpl final : public worker::WorkerService::Service {
         int endid;
         int version;
         
+        leveldb::DB* db;
+        
         std::map<int, float> nodes;
         std::map<int, float> local_nodes;
         std::map<int, std::vector<int>> edges;

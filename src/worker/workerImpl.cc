@@ -7,6 +7,8 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
 
+#include <cassert>
+#include "leveldb/db.h"
 
 #include "master.pb.h"
 using namespace grpc;
