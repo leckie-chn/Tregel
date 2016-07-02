@@ -19,16 +19,16 @@ using namespace master;
 
 MasterImpl::WorkerC::WorkerC(const string & _addr):
     addr_ (_addr),
-    stub_ (WorkerService::NewStub(CreateChannel(_addr, InsecureChannelCredentials()))) {
+    stub (WorkerService::NewStub(CreateChannel(_addr, InsecureChannelCredentials()))) {
     }
 
 MasterImpl::MasterImpl(const string &confxml):
-        mtxWorkers_(PTHREAD_MUTEX_INITIALIZER),
+        mtxWorkers(PTHREAD_MUTEX_INITIALIZER),
         conf_(confxml),
-        servAddr_(conf_.GetMasterAddr()){
+        servAddr(conf_.GetMasterAddr()){
     auto workers = conf_.GetWorkerConfs();
     for (auto iter : workers) {
-        Workers_.insert(make_pair(iter.first, unique_ptr<WorkerC>()));
+        Workers.insert(make_pair(iter.first, unique_ptr<WorkerC>()));
     }
 }
 
@@ -36,15 +36,15 @@ Status MasterImpl::Register(ServerContext *_ctxt,
         const RegisterRequest *_req,
         RegisterReply *_reply) {
 
-    static int unRegWorkerN = Workers_.size();
+    static int unRegWorkerN = Workers.size();
 
-    pthread_mutex_lock(&mtxWorkers_);
+    pthread_mutex_lock(&mtxWorkers);
     const std::string & caddr = _req->clientaddr();
-    Workers_[caddr].reset(new WorkerC(caddr));
+    Workers[caddr].reset(new WorkerC(caddr));
     if (--unRegWorkerN == 0) {
         // TODO: Start Tasks in an async manner
     }
-    pthread_mutex_unlock(&mtxWorkers_);
+    pthread_mutex_unlock(&mtxWorkers);
 
     return Status::OK;
 }

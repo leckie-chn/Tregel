@@ -13,20 +13,21 @@ class WorkerImpl final : public worker::WorkerService::Service {
         class WorkerC {
             public:
                 const std::string addr_;
-                std::unique_ptr<worker::WorkerService::Stub> stub_;
+                std::unique_ptr<worker::WorkerService::Stub> stub;
                 WorkerC(const std::string &);
                 bool hasmodel = false;
         };
 
-        std::map<std::string, std::unique_ptr<WorkerC>> Workers_;
-        std::string mAddr_;   // Address of Master
-        std::string hAddr_;
-        std::unique_ptr<master::MasterService::Stub> stub_;
+        std::map<std::string, std::unique_ptr<WorkerC>> Workers;
+        std::string mAddr;   // Address of Master
+        std::string hAddr;
+        std::unique_ptr<master::MasterService::Stub> stub;
         int startid;
         int endid;
         int version;
         
         leveldb::DB* db;
+        std::string graphpath;
         
         std::map<int, float> nodes;
         std::map<int, float> local_nodes;
@@ -42,7 +43,7 @@ class WorkerImpl final : public worker::WorkerService::Service {
         WorkerImpl(const std::string &);
 
         inline const std::string GetServiceAddr() const {
-            return hAddr_;
+            return hAddr;
         }
 
         grpc::Status StartTask(grpc::ServerContext *,

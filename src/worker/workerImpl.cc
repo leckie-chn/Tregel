@@ -22,7 +22,7 @@ using boost::property_tree::ptree;
 
 WorkerImpl::WorkerC::WorkerC(const string & _addr):
     addr_ (_addr),
-    stub_ (WorkerService::NewStub(CreateChannel(_addr, grpc::InsecureChannelCredentials()))) {
+    stub (WorkerService::NewStub(CreateChannel(_addr, grpc::InsecureChannelCredentials()))) {
     }
 
 WorkerImpl::WorkerImpl(const string & initfl) {
@@ -31,14 +31,15 @@ WorkerImpl::WorkerImpl(const string & initfl) {
         ClientContext context;
 
         LoadFromXML(initfl);
-        stub_ = MasterService::NewStub(grpc::CreateChannel(mAddr_, grpc::InsecureChannelCredentials()));
+        stub = MasterService::NewStub(grpc::CreateChannel(mAddr, grpc::InsecureChannelCredentials()));
 
-        request.set_clientaddr(hAddr_);
-        stub_->Register(&context, request, &reply);
+        request.set_clientaddr(hAddr);
+        stub->Register(&context, request, &reply);
         loadFromDisk(nodes, edges);
     }
 
 Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, StartReply *reply_) {
+    loadFromDisk(nodes, edges);
     for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
         int x = it->first;
         int y = it->second;
@@ -49,7 +50,7 @@ Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, Start
     while (true){
         int sent_cnt = 10;
         while (sent_cnt){
-            for (auto iter = Workers_.begin(); iter != Workers_.end(); iter++){
+            for (auto iter = Workers.begin(); iter != Workers.end(); iter++){
                 if (!(iter->second)->hasmodel){
                     if (pull(*(iter->second.get()))) {
                         (iter->second)->hasmodel = true;
@@ -63,9 +64,9 @@ Status WorkerImpl::StartTask(ServerContext *ctxt, const StartRequest *req, Start
         BarrierReply reply;
         ClientContext context;
         context.set_deadline(system_clock::time_point(system_clock::now() + seconds(5)));
-        request.set_workeraddr(hAddr_);
+        request.set_workeraddr(hAddr);
         writeToDisk(nodes);
-        stub_->Barrier(&context, request, &reply);    
+        stub->Barrier(&context, request, &reply);    
     }
     return Status::OK;
 }
@@ -80,7 +81,7 @@ Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullRe
 }
 
 Status WorkerImpl::InformNewPeer(ServerContext *ctxt, const InformRequest * req, InformReply *reply_){
-    Workers_[req->workeraddr()].reset(new WorkerC(req->workeraddr()));
+    Workers[req->workeraddr()].reset(new WorkerC(req->workeraddr()));
     //stubs_[0] = stub;
     return Status::OK;
 }
@@ -89,7 +90,7 @@ bool WorkerImpl::pull(WorkerC & c){
     PullRequest request;
     PullReply reply;
     ClientContext context;
-    Status status = c.stub_->PullModel(&context, request, &reply);
+    Status status = c.stub->PullModel(&context, request, &reply);
     if (status.ok()){
     //if (reply.status() == PullReply::OK){
         auto mp = reply.model();
@@ -125,13 +126,19 @@ void WorkerImpl::LoadFromXML(const string & xmlflname) {
     string port = pt.get<string>("configure.port");
     startid = pt.get<int>("configure.nodestart");
     endid = pt.get<int>("configure.nodeend");
-    hAddr_ = host + ":" + port;
+    hAddr = host + ":" + port;
   
-    mAddr_ = pt.get<string>("configure.master");
+    mAddr = pt.get<string>("configure.master");
+    
+    graphpath = pt.get<string>("configure.graphpath");
+    leveldb::Options options;
+    options.create_if_missing = true;
+    leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db);
+    assert(status.ok());
 }
 
 void WorkerImpl::loadFromDisk(map<int, float> & nodes, std::map<int, std::vector<int>>& edges){
-    FILE *fp = fopen("node.txt","r");
+    FILE *fp = fopen("node.  ","r");
     while (!feof(fp)){
         int x;
         float y;
@@ -139,7 +146,7 @@ void WorkerImpl::loadFromDisk(map<int, float> & nodes, std::map<int, std::vector
         local_nodes[x] = y;
     }
     fclose(fp);
-    fp = fopen("graph.txt","r");
+    fp = fopen(graphpath.c_str(),"r");
     while (!feof(fp)){
         int x,y;
         fscanf(fp,"%d %d",&x, &y);

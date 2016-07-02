@@ -4,4 +4,6 @@
     <master>127.0.0.1:50051</master>
     <nodestart>0</nodestart>
     <nodeend>10000</nodeend>
+    <dbpath>db</dbpath>
+    <graphpath>graph.txt</graphpath>
 </configure>

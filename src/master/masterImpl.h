@@ -20,17 +20,17 @@ class MasterImpl final : public master::MasterService::Service {
         class WorkerC {
             public:
                 const std::string addr_;
-                std::unique_ptr<worker::WorkerService::Stub> stub_;
+                std::unique_ptr<worker::WorkerService::Stub> stub;
                 WorkerC(const std::string &);
         };
 
         XmlLoader conf_;
-        const std::string servAddr_;
+        const std::string servAddr;
 
-        // mutex for Workers_
-        pthread_mutex_t mtxWorkers_;
+        // mutex for Workers
+        pthread_mutex_t mtxWorkers;
         // using `unique_ptr<WorkerC>` instead of `WorkerC` because of `unique_ptr<Stub>`
-        std::map<std::string, std::unique_ptr<WorkerC>> Workers_;
+        std::map<std::string, std::unique_ptr<WorkerC>> Workers;
 
         // Private Methods
         // Start Tasks, in a POSIX thread
@@ -41,7 +41,7 @@ class MasterImpl final : public master::MasterService::Service {
         MasterImpl(const std::string &);
 
         inline const std::string & GetServiceAddr() const {
-            return servAddr_;
+            return servAddr;
         }
 
         grpc::Status Register(grpc::ServerContext *,
