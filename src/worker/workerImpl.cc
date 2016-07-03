@@ -7,6 +7,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
+#include "src/util/XmlLoader.h"
 
 #include <cassert>
 #include "leveldb/db.h"
