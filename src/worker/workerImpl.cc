@@ -34,7 +34,7 @@ WorkerImpl::WorkerImpl(const string & initfl) {
 
     leveldb::Status s = db->Get(leveldb::ReadOptions(), "version", &version_string);
     if (s.ok()) {
-        std::stoi(version_string,version);
+        std::stoi(version_string,&version);
     } else { //init db
         version=0;
         version_string="0";
@@ -43,7 +43,7 @@ WorkerImpl::WorkerImpl(const string & initfl) {
             db->Put(write_options, "0_"+to_string(i), "0.5"); //TODO:0.5?
         }
         write_options.sync = true;
-        impl->db->Put(write_options,"version",version_string);
+        db->Put(write_options,"version",version_string);
     }
     FILE *fp = fopen(graphpath.c_str(),"r");
     while (!feof(fp)){
@@ -99,7 +99,7 @@ void WorkerImpl::LoadFromXML(const string & xmlflname) {
     leveldb::Status status = leveldb::DB::Open(options, dbpath, &db);
     assert(status.ok());
     
-    auto workers = conf_.GetWorkerVec();
+    auto workers = pt.GetWorkerVec();
     for (std::string iter : workers) {
         if (iter != hAddr) Workers.insert(make_pair(iter, new WorkerC(iter)));
     }
