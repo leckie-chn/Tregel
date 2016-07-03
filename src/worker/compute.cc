@@ -18,7 +18,7 @@ void *compute_thread(void *arg) {
 
         request.set_roundno(rd);
         request.set_converge(false);    // TODO judge whether this round of computation has converged
-        impl->stub_->Barrier(&context, request, &reply);
+        impl->stub->Barrier(&context, request, &reply);
 
         if (reply.done()) {
             // TODO shutdown
