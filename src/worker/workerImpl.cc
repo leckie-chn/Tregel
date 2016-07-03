@@ -30,12 +30,12 @@ WorkerImpl::WorkerC::WorkerC(const string & _addr):
 
 WorkerImpl::WorkerImpl(const string & initfl) {
     LoadFromXML(initfl);
-    stub_ = MasterService::NewStub(grpc::CreateChannel(mAddr_, grpc::InsecureChannelCredentials()));
+    stub = MasterService::NewStub(grpc::CreateChannel(mAddr, grpc::InsecureChannelCredentials()));
     // TODO: deal with recover from failure
 }
 
 
-Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply_) {
+Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply) {
     reply_->clear_model();
     for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
         (*(reply->mutable_model()))[it->first] = it->second;
