@@ -102,7 +102,7 @@ void WorkerImpl::LoadFromXML(const string & xmlflname) {
     
     ptree workers = pt.get_child("configure.workers");
     for (ptree::value_type &v: workers) {
-        if (v.second.data() != hAddr) Workers.insert(make_pair(v.second.data(), new WorkerC(v.second.data())));
+        if (v.second.data() != hAddr) Workers.insert(make_pair(v.second.data(), WorkerC(v.second.data())));
     }
 }
 
