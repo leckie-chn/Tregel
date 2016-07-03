@@ -100,11 +100,10 @@ void WorkerImpl::LoadFromXML(const string & xmlflname) {
     leveldb::Status status = leveldb::DB::Open(options, dbpath, &db);
     assert(status.ok());
     
-    auto workers = pt.GetWorkerVec();
-    for (std::string iter : workers) {
-        if (iter != hAddr) Workers.insert(make_pair(iter, new WorkerC(iter)));
+    ptree workers = pt.get_child("configure.workers");
+    for (ptree::value_type &v: workers) {
+        if (v.second.data() != hAddr) Workers.insert(make_pair(v.second.data(), new WorkerC(v.second.data())));
     }
-
 }
 
 // void WorkerImpl::loadFromDisk(){

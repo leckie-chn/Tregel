@@ -9,6 +9,7 @@
 #include <string>
 #include <pthread.h>
 #include "leveldb/db.h"
+#include "src/util/XmlLoader.h"
 
 class WorkerImpl final : public worker::WorkerService::Service {
     private:
