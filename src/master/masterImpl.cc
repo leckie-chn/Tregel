@@ -37,6 +37,8 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
         BarrierReply *_reply) {
 
     int round = _req->roundno();
+
+    cout << "Worker " << _req->workeraddr() << "waiting on Round " << _req->roundno() << endl; 
     
     if (round <= roundno_) {
         // rare case, but MAY happen when a worker recover from failure
@@ -58,6 +60,7 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
             } 
 
         if (allsync) {
+            cout << "Round " << roundno_ << " Done" << endl;
             halt_ = haltRound();
             roundno_++;
             pthread_cond_broadcast(&cond_);

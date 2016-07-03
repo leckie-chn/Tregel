@@ -8,6 +8,7 @@
 
 #include <string>
 #include <pthread.h>
+#include "leveldb/db.h"
 
 class WorkerImpl final : public worker::WorkerService::Service {
     private:
@@ -23,13 +24,12 @@ class WorkerImpl final : public worker::WorkerService::Service {
         std::string mAddr;   // Address of Master
         std::string hAddr;
         std::unique_ptr<master::MasterService::Stub> stub;
-        int startid;
-        int endid;
-        int version;
         void LoadFromXML(const std::string &);
-        void loadFromDisk(std::map<int, float> &, std::map<int, std::vector<int>> &);
-        void writeToDisk(std::map<int, float> &);
+        // void loadFromDisk(std::map<int, float> &, std::map<int, std::vector<int>> &);
+        // void writeToDisk(std::map<int, float> &);
         bool pull(WorkerC &);
+
+        std::string graphpath;
 
         // void shutdown();
 
@@ -37,7 +37,8 @@ class WorkerImpl final : public worker::WorkerService::Service {
         pthread_t pid_;
         friend void *compute_thread(void *);
 
-    public:
+
+        public:
         // Constuctor 
         WorkerImpl(const std::string &);
 
@@ -53,6 +54,13 @@ class WorkerImpl final : public worker::WorkerService::Service {
         std::map<int, float> local_nodes;
         std::map<int, std::vector<int>> edges;
         std::map<int, int> out_degree;
+
+        int startid;
+        int endid;
+        int version;
+        std::string version_string;
+        leveldb::DB* db;
+
 };
 
 void *compute_thread(void *);

@@ -1,7 +1,9 @@
 #include "src/worker/workerImpl.h"
+#include <unistd.h>
 
 using namespace master;
 using namespace grpc;
+using namespace std;
 
 extern WorkerImpl *impl;
 
