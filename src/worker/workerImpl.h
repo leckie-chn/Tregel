@@ -20,7 +20,6 @@ class WorkerImpl final : public worker::WorkerService::Service {
                 bool hasmodel = false;
         };
 
-        std::map<std::string, std::unique_ptr<WorkerC>> Workers;
         std::string mAddr;   // Address of Master
         std::string hAddr;
         std::unique_ptr<master::MasterService::Stub> stub;
@@ -55,6 +54,7 @@ class WorkerImpl final : public worker::WorkerService::Service {
         std::map<int, std::vector<int>> edges;
         std::map<int, int> out_degree;
 
+        std::map<std::string, std::unique_ptr<WorkerC>> Workers;
         int startid;
         int endid;
         int version;

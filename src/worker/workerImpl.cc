@@ -98,6 +98,12 @@ void WorkerImpl::LoadFromXML(const string & xmlflname) {
     options.create_if_missing = true;
     leveldb::Status status = leveldb::DB::Open(options, dbpath, &db);
     assert(status.ok());
+    
+    auto workers = conf_.GetWorkerVec();
+    for (std::string iter : workers) {
+        if (iter != hAddr) Workers.insert(make_pair(iter, new WorkerC(iter)));
+    }
+
 }
 
 // void WorkerImpl::loadFromDisk(){

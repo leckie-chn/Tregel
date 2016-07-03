@@ -45,17 +45,24 @@ void *compute_thread(void *arg) {
     }
     
     request.set_roundno(impl->version);
+    request.set_workeraddr(impl->GetServiceAddr());
     request.set_converge(false);
+
     impl->stub->Barrier(&context, request, &reply);
     for (;;) {
         if (reply.done()) {
             break;// TODO shutdown
         }
         // TODO pull model from peer workers
+        int workmate_count=0;
+        //load local model
+        for (int i=impl->startid;i<impl->endid;i++) {
+            impl->nodes[i]=impl->local_nodes[i];
+        }
         page_rank();
         writeToDisk(); //version++
         request.set_roundno(version);
-        request.set_converge(false);// TODO judge whether this round of computation has converged
+        // TODO judge whether this round of computation has converged
         impl->stub->Barrier(&context, request, &reply);
     }
     return NULL;
