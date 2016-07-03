@@ -26,9 +26,9 @@ MasterImpl::MasterImpl(const string &confxml):
     mu_(PTHREAD_MUTEX_INITIALIZER),
     cond_(PTHREAD_COND_INITIALIZER),
     servAddr(conf_.GetMasterAddr()){
-        auto workers = conf_.GetWorkerConfs();
+        auto workers = conf_.GetWorkerVec();
         for (auto iter : workers) {
-            Workers_.insert(make_pair(iter.first, WorkerC()));
+            Workers_.insert(make_pair(iter, WorkerC()));
         }
     }
 

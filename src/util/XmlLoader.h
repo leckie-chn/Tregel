@@ -9,15 +9,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <string>
-#include <map>
-
-class WorkerConf {
-public:
-    // Worker holds the vertexes in [vtx_begin, vtx_end)
-    const unsigned vtx_begin;
-    const unsigned vtx_end;
-    WorkerConf(unsigned, unsigned);
-};
+#include <vector>
 
 class XmlLoader {
 private:
@@ -33,7 +25,7 @@ public:
     std::string GetWorkerAddr();
 
     // Get the Addresses of Workers
-    std::map<std::string, WorkerConf> GetWorkerConfs();
+    std::vector<std::string> GetWorkerVec();
 };
 
 
