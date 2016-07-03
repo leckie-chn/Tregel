@@ -16,47 +16,63 @@ using namespace grpc;
 using namespace worker;
 using namespace master;
 
-
-MasterImpl::WorkerC::WorkerC(const string & _addr):
-    addr_ (_addr),
-    stub (WorkerService::NewStub(CreateChannel(_addr, InsecureChannelCredentials()))) {
-    }
+MasterImpl::WorkerC::WorkerC():
+    waiting_(false),
+    converge_(false) {}
 
 MasterImpl::MasterImpl(const string &confxml):
-        mtxWorkers(PTHREAD_MUTEX_INITIALIZER),
-        conf_(confxml),
-        servAddr(conf_.GetMasterAddr()){
-    auto workers = conf_.GetWorkerConfs();
-    for (auto iter : workers) {
-        Workers.insert(make_pair(iter.first, unique_ptr<WorkerC>()));
+    conf_(confxml),
+    roundno_(-1),
+    mu_(PTHREAD_MUTEX_INITIALIZER),
+    cond_(PTHREAD_COND_INITIALIZER),
+    servAddr_(conf_.GetMasterAddr()){
+        auto workers = conf_.GetWorkerConfs();
+        for (auto iter : workers) {
+            Workers_.insert(make_pair(iter.first, WorkerC()));
+        }
     }
-}
-
-Status MasterImpl::Register(ServerContext *_ctxt,
-        const RegisterRequest *_req,
-        RegisterReply *_reply) {
-
-    static int unRegWorkerN = Workers.size();
-
-    pthread_mutex_lock(&mtxWorkers);
-    const std::string & caddr = _req->clientaddr();
-    Workers[caddr].reset(new WorkerC(caddr));
-    if (--unRegWorkerN == 0) {
-        // TODO: Start Tasks in an async manner
-    }
-    pthread_mutex_unlock(&mtxWorkers);
-
-    return Status::OK;
-}
 
 Status MasterImpl::Barrier(ServerContext *_ctxt,
         const BarrierRequest *_req,
         BarrierReply *_reply) {
 
-    cout << "Worker " << _req->workeraddr() << "Round " << _req->roundno() << "\tStart" << endl;
+    int round = _req->roundno();
+    
+    if (round <= roundno_) {
+        // rare case, but MAY happen when a worker recover from failure
+        // do not block, return OK
+        _reply->set_status(BarrierReply_BarrierStatus_OK);
+        _reply->set_done(false);
+    } else {
+        // Worker wait for synchronization, normal case
+        pthread_mutex_lock(&mu_);
+        WorkerC & worker = Workers_[_req->workeraddr()];
+        worker.waiting_ = true;
+        worker.converge_ = _req->converge();
+    
+        bool allsync = true;
+        for (auto & iter : Workers_)
+            if (!iter.second.waiting_) {
+                allsync = false;
+                break;
+            } 
+
+        if (allsync) {
+            halt_ = haltRound();
+            roundno_++;
+            pthread_cond_broadcast(&cond_);
+        } else 
+            pthread_cond_wait(&cond_, &mu_);
+        
+        pthread_mutex_unlock(&mu_);
+    } 
 
     return Status::OK;
 }
 
-
-
+bool MasterImpl::haltRound() {
+    for (auto & iter : Workers_) 
+        if (!iter.second.converge_)
+            return false;
+    return true;
+}

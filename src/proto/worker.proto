@@ -21,10 +21,6 @@ service WorkerService {
 }
 
 message StartRequest {
-    // vertex partition of workers (sequential), map: workeraddr -> first vertex number
-    map<string, int32> VertexPartition = 1;
-    // Name of Graph data file
-    string GraphName = 2;
 }
 
 message StartReply {
