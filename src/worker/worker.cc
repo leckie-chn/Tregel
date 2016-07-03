@@ -3,6 +3,8 @@
 #include <grpc++/grpc++.h>
 #include <pthread.h>
 
+#include <leveldb/db.h>
+
 #include "master.grpc.pb.h"
 #include "workerImpl.h"
 
@@ -21,11 +23,10 @@ pthread_t pid;
 
 int main(int argc, char **argv) {
 
-    WorkerImpl service(argv[1]);
-    impl = &service;
+    impl = new WorkerImpl(argv[1]);
     ServerBuilder builder;
-    builder.AddListeningPort(service.GetServiceAddr(), InsecureServerCredentials());
-    builder.RegisterService(&service);
+    builder.AddListeningPort(impl->GetServiceAddr(), InsecureServerCredentials());
+    builder.RegisterService(impl);
     unique_ptr<Server> server(builder.BuildAndStart());
 
     pthread_create(&pid, NULL, compute_thread, NULL);

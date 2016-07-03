@@ -31,9 +31,29 @@ WorkerImpl::WorkerC::WorkerC(const string & _addr):
 WorkerImpl::WorkerImpl(const string & initfl) {
     LoadFromXML(initfl);
     stub = MasterService::NewStub(grpc::CreateChannel(mAddr, grpc::InsecureChannelCredentials()));
-    // TODO: deal with recover from failure
-}
 
+    leveldb::Status s = db->Get(leveldb::ReadOptions(), "version", &version_string);
+    if (s.ok()) {
+        std::stoi(version_string,version);
+    } else { //init db
+        version=0;
+        version_string="0";
+        leveldb::WriteOptions write_options;
+        for (int i=startid;i<endid;i++) {
+            db->Put(write_options, "0_"+to_string(i), "0.5"); //TODO:0.5?
+        }
+        write_options.sync = true;
+        impl->db->Put(write_options,"version",version_string);
+    }
+    FILE *fp = fopen(graphpath.c_str(),"r");
+    while (!feof(fp)){
+        int x,y;
+        fscanf(fp,"%d %d",&x, &y);
+        out_degree[x]++;
+        edges[x].push_back(y);
+    }
+    fclose(fp);
+}
 
 Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply) {
     reply->clear_model();
@@ -60,45 +80,53 @@ bool WorkerImpl::pull(WorkerC & c) {
         return true;
     }
     return false;
-    }
+}
 
-    void WorkerImpl::LoadFromXML(const string & xmlflname) {
-        ptree pt;
-        read_xml(xmlflname, pt);
+void WorkerImpl::LoadFromXML(const string & xmlflname) {
+    ptree pt;
+    read_xml(xmlflname, pt);
 
-        string host = pt.get<string>("configure.host");
-        string port = pt.get<string>("configure.port");
-        startid = pt.get<int>("configure.nodestart");
-        endid = pt.get<int>("configure.nodeend");
-        hAddr = host + ":" + port;
+    startid = pt.get<int>("configure.nodestart");
+    endid = pt.get<int>("configure.nodeend");
+    hAddr = pt.get<string>("configure.host");
 
-        mAddr = pt.get<string>("configure.master");
-    }
+    mAddr = pt.get<string>("configure.master");
+    
+    graphpath = pt.get<string>("configure.graphpath");
+    string dbpath = pt.get<string>("configure.dbpath");
+    leveldb::Options options;
+    options.create_if_missing = true;
+    leveldb::Status status = leveldb::DB::Open(options, dbpath, &db);
+    assert(status.ok());
+}
 
-    void WorkerImpl::loadFromDisk(map<int, float> & nodes, std::map<int, std::vector<int>>& edges){
-        FILE *fp = fopen("node.txt","r");
-        while (!feof(fp)){
-            int x;
-            float y;
-            fscanf(fp,"%d %f",&x, &y);
-            local_nodes[x] = y;
-        }
-        fclose(fp);
-        fp = fopen("graph.txt","r");
-        while (!feof(fp)){
-            int x,y;
-            fscanf(fp,"%d %d",&x, &y);
-            out_degree[x]++;
-            edges[x].push_back(y);
-        }
-        fclose(fp);
-    }
+// void WorkerImpl::loadFromDisk(){
+    // FILE *fp = fopen("node.txt","r");
+    // while (!feof(fp)){
+        // int x;
+        // float y;
+        // fscanf(fp,"%d %f",&x, &y);
+        // local_nodes[x] = y;
+    // }
+    // fclose(fp);
+    // fp = fopen(graphpath.c_str(),"r");
+    // while (!feof(fp)){
+        // int x,y;
+        // fscanf(fp,"%d %d",&x, &y);
+        // out_degree[x]++;
+        // edges[x].push_back(y);
+    // }
+    // fclose(fp);
+// }
 
-    void WorkerImpl::writeToDisk(map<int, float> & nodes){
-        FILE *fp = fopen("node.txt","w");
-        for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
-            if ((it -> first >= startid) && (it->first < endid))
-                fprintf(fp,"%d %f", it->first, it->second);
-        }
-        fclose(fp);
-    }
+
+// void WorkerImpl::writeToDisk(){
+    // version++;
+    // string version_string=to_string(version);
+    // leveldb::WriteOptions write_options;
+    // for (int i=startid;i<endid;i++) {
+        // db->Put(write_options, version_string+"_"+to_string(i), to_string(local_nodes[i]));
+    // }
+    // write_options.sync = true;
+    // db->Put(write_options,"version",version_string);
+// }

@@ -1,6 +1,5 @@
 <configure>
-    <host>127.0.0.1</host>
-    <port>50060</port>
+    <host>127.0.0.1:50060</host>
     <master>127.0.0.1:50051</master>
     <nodestart>0</nodestart>
     <nodeend>10000</nodeend>
