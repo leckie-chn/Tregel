@@ -1,7 +1,9 @@
 #include "src/worker/workerImpl.h"
+#include <unistd.h>
 
 using namespace master;
 using namespace grpc;
+using namespace std;
 
 extern WorkerImpl *impl;
 
@@ -12,14 +14,18 @@ void *compute_thread(void *arg) {
         // TODO this round of computation
         // TODO checkpoint
         
+        
         ClientContext context;
         BarrierRequest request;
         BarrierReply reply;
 
+        request.set_workeraddr(impl->GetServiceAddr());
         request.set_roundno(rd);
         request.set_converge(false);    // TODO judge whether this round of computation has converged
         impl->stub->Barrier(&context, request, &reply);
 
+        sleep(5);
+        cout << "Round " << rd << " Done" << endl;
         if (reply.done()) {
             // TODO shutdown
         }
