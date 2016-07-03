@@ -25,7 +25,7 @@ MasterImpl::MasterImpl(const string &confxml):
     roundno_(-1),
     mu_(PTHREAD_MUTEX_INITIALIZER),
     cond_(PTHREAD_COND_INITIALIZER),
-    servAddr_(conf_.GetMasterAddr()){
+    servAddr(conf_.GetMasterAddr()){
         auto workers = conf_.GetWorkerConfs();
         for (auto iter : workers) {
             Workers_.insert(make_pair(iter.first, WorkerC()));
