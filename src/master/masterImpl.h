@@ -9,8 +9,7 @@
 #include <grpc++/grpc++.h>
 #include <string>
 #include <map>
-#include <condition_variable>
-#include <mutex>
+#include <pthread.h>
 
 #include "src/util/XmlLoader.h"
 
@@ -21,43 +20,31 @@ class MasterImpl final : public master::MasterService::Service {
         // Client on Worker Node
         class WorkerC {
             public:
-                const std::string addr_;
-                std::unique_ptr<worker::WorkerService::Stub> stub_;
-
-                // Vars for Async StartTask
-                std::unique_ptr<grpc::ClientAsyncResponseReader<worker::StartReply> > taskrpc_;
-                worker::StartReply taskreply_;
-                grpc::Status taskstat_;
-                grpc::ClientContext taskcontext_;
-
                 // Vars for Barrier Sync
-                bool roundbarrier_;
-
-                // Constructor
-                WorkerC(const std::string &);
+                bool waiting_;
+                bool converge_;
+                WorkerC();
         };
 
         XmlLoader conf_;
         const std::string servAddr_;
 
+        // mutex for critical data
+        pthread_mutex_t mu_;
         // using `unique_ptr<WorkerC>` instead of `WorkerC` because of `unique_ptr<Stub>`
-        std::map<std::string, std::unique_ptr<WorkerC>> Workers_;
+        std::map<std::string, WorkerC> Workers_;
 
-        // Private Methods
-        // Start/Stop Tasks
-        grpc::CompletionQueue jobcq_;
-        void startJob();
-        void stopJob();
 
         // Round Sync Vars
-        int roundno_;
-        std::mutex syncmtx_;
-        std::unique_lock<std::mutex> synclk_;
-        std::condition_variable synccond_;
-        bool halt_;
+        int roundno_;   // stands for the maximum round number that all workers have complete (except for failures)
+        pthread_cond_t cond_;   // condition variable on release all blocking workers
 
-        // failure handling
-        void bcReboot(const std::string &);
+        // determine if the compute has come to an end
+        bool haltRound();
+        bool halt_;
+        
+
+        
 
     public:
         MasterImpl(const std::string &);
@@ -66,9 +53,6 @@ class MasterImpl final : public master::MasterService::Service {
             return servAddr_;
         }
 
-        grpc::Status Register(grpc::ServerContext *,
-                const master::RegisterRequest *,
-                master::RegisterReply*) override;
         grpc::Status Barrier(grpc::ServerContext *,
                 const master::BarrierRequest *,
                 master::BarrierReply *) override;

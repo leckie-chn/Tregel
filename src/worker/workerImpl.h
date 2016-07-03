@@ -7,6 +7,7 @@
 #include "master.grpc.pb.h"
 
 #include <string>
+#include <pthread.h>
 
 class WorkerImpl final : public worker::WorkerService::Service {
     private:
@@ -25,33 +26,37 @@ class WorkerImpl final : public worker::WorkerService::Service {
         int startid;
         int endid;
         int version;
-        
-        std::map<int, float> nodes;
-        std::map<int, float> local_nodes;
-        std::map<int, std::vector<int>> edges;
-        std::map<int, int> out_degree;
+
         void LoadFromXML(const std::string &);
         void loadFromDisk(std::map<int, float> &, std::map<int, std::vector<int>> &);
         void writeToDisk(std::map<int, float> &);
-        void page_rank();
         bool pull(WorkerC &);
+
+        // void shutdown();
+
+        // thread id for main thread computing model
+        pthread_t pid_;
+        friend void *compute_thread(void *);
+
     public:
-        // Initializer
+        // Constuctor 
         WorkerImpl(const std::string &);
 
         inline const std::string GetServiceAddr() const {
             return hAddr_;
         }
 
-        grpc::Status StartTask(grpc::ServerContext *,
-                const worker::StartRequest *,
-                worker::StartReply *) override;
         grpc::Status PullModel(grpc::ServerContext *,
                 const worker::PullRequest *,
                 worker::PullReply *) override;
-        grpc::Status InformNewPeer(grpc::ServerContext *,
-                const worker::InformRequest *,
-                worker::InformReply *) override;
+
+        std::map<int, float> nodes;
+        std::map<int, float> local_nodes;
+        std::map<int, std::vector<int>> edges;
+        std::map<int, int> out_degree;
 };
+
+void *compute_thread(void *);
+void page_rank(WorkerImpl &);
 
 #endif
