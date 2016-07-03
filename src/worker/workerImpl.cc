@@ -58,8 +58,11 @@ WorkerImpl::WorkerImpl(const string & initfl) {
 
 Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply) {
     reply->clear_model();
-    for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
-        (*(reply->mutable_model()))[it->first] = it->second;
+    string pull_version = to_string(req->roundno());
+    std::string value;
+    for (int i=impl->startid;i<impl->endid;i++) {
+        db->Get(leveldb::ReadOptions(), pull_version+"_"+to_string(i), &value);
+        (*(reply->mutable_model()))[i]=std::stoi(value);
     }
     reply->set_status(PullReply::OK);
     return Status::OK;
@@ -69,6 +72,7 @@ bool WorkerImpl::pull(WorkerC & c) {
     PullRequest request;
     PullReply reply;
     ClientContext context;
+    request.set_roundno(version);
     Status status = c.stub->PullModel(&context, request, &reply);
     if (status.ok()){
         //if (reply.status() == PullReply::OK){
