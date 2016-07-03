@@ -61,7 +61,7 @@ void *compute_thread(void *arg) {
         }
         page_rank();
         writeToDisk(); //version++
-        request.set_roundno(version);
+        request.set_roundno(impl->version);
         // TODO judge whether this round of computation has converged
         impl->stub->Barrier(&context, request, &reply);
     }
