@@ -34,7 +34,7 @@ WorkerImpl::WorkerImpl(const string & initfl) {
 
     leveldb::Status s = db->Get(leveldb::ReadOptions(), "version", &version_string);
     if (s.ok()) {
-        std::stoi(version_string,&version);
+        version=std::stoi(version_string);
     } else { //init db
         version=0;
         version_string="0";
