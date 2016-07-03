@@ -36,7 +36,7 @@ WorkerImpl::WorkerImpl(const string & initfl) {
 
 
 Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullReply *reply) {
-    reply_->clear_model();
+    reply->clear_model();
     for (auto it = local_nodes.begin(); it!=local_nodes.end(); it++){
         (*(reply->mutable_model()))[it->first] = it->second;
     }
@@ -70,9 +70,9 @@ bool WorkerImpl::pull(WorkerC & c) {
         string port = pt.get<string>("configure.port");
         startid = pt.get<int>("configure.nodestart");
         endid = pt.get<int>("configure.nodeend");
-        hAddr_ = host + ":" + port;
+        hAddr = host + ":" + port;
 
-        mAddr_ = pt.get<string>("configure.master");
+        mAddr = pt.get<string>("configure.master");
     }
 
     void WorkerImpl::loadFromDisk(map<int, float> & nodes, std::map<int, std::vector<int>>& edges){
