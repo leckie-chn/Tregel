@@ -20,7 +20,7 @@ class WorkerImpl final : public worker::WorkerService::Service {
         void LoadFromXML(const std::string &);
         // void loadFromDisk(std::map<int, float> &, std::map<int, std::vector<int>> &);
         // void writeToDisk(std::map<int, float> &);
-        bool pull(WorkerC &);
+        // bool pull(WorkerC &);
 
         std::string graphpath;
 
