@@ -13,13 +13,6 @@
 
 class WorkerImpl final : public worker::WorkerService::Service {
     private:
-        class WorkerC {
-            public:
-                const std::string addr_;
-                std::unique_ptr<worker::WorkerService::Stub> stub;
-                WorkerC(const std::string &);
-                bool hasmodel = false;
-        };
 
         std::string mAddr;   // Address of Master
         std::string hAddr;
@@ -62,6 +55,13 @@ class WorkerImpl final : public worker::WorkerService::Service {
         std::string version_string;
         leveldb::DB* db;
 
+        class WorkerC {
+            public:
+                const std::string addr_;
+                std::unique_ptr<worker::WorkerService::Stub> stub;
+                WorkerC(const std::string &);
+                bool hasmodel = false;
+        };
 };
 
 void *compute_thread(void *);

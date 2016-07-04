@@ -8,7 +8,7 @@ using namespace std;
 
 extern WorkerImpl *impl;
 
-bool pull(WorkerC & c) {
+bool pull(WorkerImpl::WorkerC & c) {
     PullRequest request;
     PullReply reply;
     ClientContext context;
