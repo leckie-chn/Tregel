@@ -54,9 +54,6 @@ void writeToDisk(){
 
 void *compute_thread(void *arg) {
 
-    ClientContext context;
-    BarrierRequest request;
-    BarrierReply reply;
 
     //TODO: load from disk
     std::string value;
@@ -65,14 +62,19 @@ void *compute_thread(void *arg) {
         impl->local_nodes[i]=std::stof(value);
     }
 
-    request.set_roundno(impl->version);
-    request.set_workeraddr(impl->GetServiceAddr());
-    request.set_converge(false);
 
-    impl->stub->Barrier(&context, request, &reply);
     for (;;) {
+        ClientContext context;
+        BarrierRequest request;
+        BarrierReply reply;
+        
+        request.set_roundno(impl->version);
+        request.set_workeraddr(impl->GetServiceAddr());
+        request.set_converge(false);
+        
+        impl->stub->Barrier(&context, request, &reply);
         if (reply.done()) {
-            break;// TODO shutdown
+            break;  // TODO shutdown
         }
         // TODO pull model from peer workers
         int workmate_count=0;
@@ -96,7 +98,6 @@ void *compute_thread(void *arg) {
         request.set_roundno(impl->version);
         // TODO judge whether this round of computation has converged
         LOG("Round %d done\n", impl->version);
-        impl->stub->Barrier(&context, request, &reply);
     }
     return NULL;
 }
