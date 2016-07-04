@@ -35,7 +35,7 @@ message PullRequest {
     // who is Pulling 
     string WorkerAddr = 1;
     // Round Number of Graph Parameter being Pulled
-    int32 RountNo = 2;
+    int32 RoundNo = 2;
     // content of the model
 }
 
