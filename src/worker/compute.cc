@@ -62,7 +62,7 @@ void *compute_thread(void *arg) {
     std::string value;
     for (int i=impl->startid;i<impl->endid;i++) {
         impl->db->Get(leveldb::ReadOptions(), impl->version_string+"_"+to_string(i), &value);
-        impl->local_nodes[i]=std::stoi(value);
+        impl->local_nodes[i]=std::stof(value);
     }
 
     request.set_roundno(impl->version);
