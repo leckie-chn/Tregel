@@ -8,15 +8,23 @@ using namespace std;
 
 extern WorkerImpl *impl;
 
-void writeToDisk(){
-    impl->version++;
-    impl->version_string=to_string(impl->version);
-    leveldb::WriteOptions write_options;
-    for (int i=impl->startid;i<impl->endid;i++) {
-        impl->db->Put(write_options, impl->version_string+"_"+to_string(i), to_string(impl->local_nodes[i]));
+bool pull(WorkerC & c) {
+    PullRequest request;
+    PullReply reply;
+    ClientContext context;
+    request.set_roundno(impl->version);
+    Status status = c.stub->PullModel(&context, request, &reply);
+    if (status.ok()){
+        //if (reply.status() == PullReply::OK){
+        auto mp = reply.model();
+        for (auto it = mp.begin();it != mp.end(); it++){
+            int x = it->first;
+            float y = it->second;
+            impl->nodes[x] = y;
+        }
+        return true;
     }
-    write_options.sync = true;
-    impl->db->Put(write_options,"version",impl->version_string);
+    return false;
 }
 
 void page_rank(){
@@ -30,6 +38,17 @@ void page_rank(){
         }
         impl->local_nodes[i] = score;
     }
+}
+
+void writeToDisk(){
+    impl->version++;
+    impl->version_string=to_string(impl->version);
+    leveldb::WriteOptions write_options;
+    for (int i=impl->startid;i<impl->endid;i++) {
+        impl->db->Put(write_options, impl->version_string+"_"+to_string(i), to_string(impl->local_nodes[i]));
+    }
+    write_options.sync = true;
+    impl->db->Put(write_options,"version",impl->version_string);
 }
 
 void *compute_thread(void *arg) {
@@ -56,6 +75,17 @@ void *compute_thread(void *arg) {
         }
         // TODO pull model from peer workers
         int workmate_count=0;
+        for (auto iter = impl->Workers.begin(); iter != impl->Workers.end(); iter++){
+            iter->second->hasmodel=false;
+            workmate_count++;
+        }
+        while (workmate_count) {
+            for (auto iter = impl->Workers.begin(); iter != impl->Workers.end(); iter++){
+                if (!(iter->second)->hasmodel){
+                    if (iter->second->hasmodel=pull(*(iter->second.get()))) workmate_count--;
+                }
+            }
+        }
         //load local model
         for (int i=impl->startid;i<impl->endid;i++) {
             impl->nodes[i]=impl->local_nodes[i];

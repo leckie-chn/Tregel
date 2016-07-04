@@ -68,24 +68,24 @@ Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullRe
     return Status::OK;
 }
 
-bool WorkerImpl::pull(WorkerC & c) {
-    PullRequest request;
-    PullReply reply;
-    ClientContext context;
-    request.set_roundno(version);
-    Status status = c.stub->PullModel(&context, request, &reply);
-    if (status.ok()){
-        //if (reply.status() == PullReply::OK){
-        auto mp = reply.model();
-        for (auto it = mp.begin();it != mp.end(); it++){
-            int x = it->first;
-            float y = it->second;
-            nodes[x] = y;
-        }
-        return true;
-    }
-    return false;
-}
+// bool WorkerImpl::pull(WorkerC & c) {
+    // PullRequest request;
+    // PullReply reply;
+    // ClientContext context;
+    // request.set_roundno(version);
+    // Status status = c.stub->PullModel(&context, request, &reply);
+    // if (status.ok()){
+        // //if (reply.status() == PullReply::OK){
+        // auto mp = reply.model();
+        // for (auto it = mp.begin();it != mp.end(); it++){
+            // int x = it->first;
+            // float y = it->second;
+            // nodes[x] = y;
+        // }
+        // return true;
+    // }
+    // return false;
+// }
 
 void WorkerImpl::LoadFromXML(const string & xmlflname) {
     ptree pt;
