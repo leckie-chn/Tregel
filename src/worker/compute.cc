@@ -77,13 +77,13 @@ void *compute_thread(void *arg) {
         // TODO pull model from peer workers
         int workmate_count=0;
         for (auto iter = impl->Workers.begin(); iter != impl->Workers.end(); iter++){
-            iter->second->hasmodel=false;
+            iter->second.hasmodel=false;
             workmate_count++;
         }
         while (workmate_count) {
             for (auto iter = impl->Workers.begin(); iter != impl->Workers.end(); iter++){
-                if (!(iter->second)->hasmodel){
-                    if (iter->second->hasmodel=pull(*(iter->second.get()))) workmate_count--;
+                if (!iter->second.hasmodel){
+                    if (iter->second.hasmodel=pull(iter->second)) workmate_count--;
                 }
             }
         }
