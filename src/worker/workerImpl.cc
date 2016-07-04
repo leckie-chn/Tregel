@@ -51,7 +51,7 @@ WorkerImpl::WorkerImpl(const string & initfl) {
         int x,y;
         fscanf(fp,"%d %d",&x, &y);
         out_degree[x]++;
-        edges[x].push_back(y);
+        edges[y].push_back(x);
     }
     fclose(fp);
 }
