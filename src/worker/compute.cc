@@ -35,7 +35,7 @@ void page_rank(){
         int tot = v.size();
         for (auto it = v.begin(); it != v.end(); it++){
             int y = *it;
-            score += float(impl->nodes[y]) / impl->out_degree[y];
+            score += impl->nodes[y] / impl->out_degree[y];
         }
         impl->local_nodes[i] = score;
     }
