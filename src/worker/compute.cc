@@ -5,6 +5,7 @@
 using namespace master;
 using namespace grpc;
 using namespace std;
+using namespace worker;
 
 extern WorkerImpl *impl;
 
