@@ -48,7 +48,6 @@ class WorkerImpl final : public worker::WorkerService::Service {
         std::map<int, std::vector<int>> edges;
         std::map<int, int> out_degree;
 
-        std::map<std::string, WorkerC> Workers;
         int startid;
         int endid;
         int version;
@@ -62,6 +61,7 @@ class WorkerImpl final : public worker::WorkerService::Service {
                 WorkerC(const std::string &);
                 bool hasmodel = false;
         };
+        std::map<std::string, WorkerC> Workers;
 };
 
 void *compute_thread(void *);
