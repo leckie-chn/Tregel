@@ -1,4 +1,5 @@
 #include "src/worker/workerImpl.h"
+#include "src/util/logger.h"
 #include <unistd.h>
 
 using namespace master;
@@ -36,14 +37,14 @@ void *compute_thread(void *arg) {
     ClientContext context;
     BarrierRequest request;
     BarrierReply reply;
-    
+
     //TODO: load from disk
     std::string value;
     for (int i=impl->startid;i<impl->endid;i++) {
         impl->db->Get(leveldb::ReadOptions(), impl->version_string+"_"+to_string(i), &value);
         impl->local_nodes[i]=std::stoi(value);
     }
-    
+
     request.set_roundno(impl->version);
     request.set_workeraddr(impl->GetServiceAddr());
     request.set_converge(false);
@@ -63,6 +64,7 @@ void *compute_thread(void *arg) {
         writeToDisk(); //version++
         request.set_roundno(impl->version);
         // TODO judge whether this round of computation has converged
+        LOG("Round %d done\n", impl->version);
         impl->stub->Barrier(&context, request, &reply);
     }
     return NULL;

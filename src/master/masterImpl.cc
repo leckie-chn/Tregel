@@ -1,4 +1,5 @@
 #include "masterImpl.h"
+#include "src/util/logger.h"
 
 #include <iostream>
 #include <chrono>
@@ -38,7 +39,7 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
 
     int round = _req->roundno();
 
-    cout << "Worker " << _req->workeraddr() << "waiting on Round " << _req->roundno() << endl; 
+    LOG("Worker %s waiting on Round %llu\n", _req->workeraddr().c_str(), _req->roundno());
     
     if (round <= roundno_) {
         // rare case, but MAY happen when a worker recover from failure
@@ -60,7 +61,8 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
             } 
 
         if (allsync) {
-            cout << "Round " << roundno_ << " Done" << endl;
+            // cout << "Round " << roundno_ << " Done" << endl;
+            LOG("Round %d Done\n", roundno_);
             halt_ = haltRound();
             roundno_++;
             pthread_cond_broadcast(&cond_);
