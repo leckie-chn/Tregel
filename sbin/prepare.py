@@ -53,9 +53,6 @@ def workerXml(xmlfl, haddr, maddr, startid, endid, dbpath, graphpath, wlist):
 
 def splitGraph(graphfl, workerN):
     f = open(graphfl, 'r')
-    flst = list()
-    for i in range(workerN):
-        flst.append(open('%s-%d' % (graphfl, i), 'w+'))
     nodeset = Set()
     lines = f.readlines()
     for line in lines:
@@ -74,27 +71,7 @@ def splitGraph(graphfl, workerN):
             nodes[i * nodeN / workerN],
             nodes[(i + 1) * nodeN / workerN]))
 
-    for line in lines:
-        edgestr = line.split()
-        nodeu = int(edgestr[0])
-        nodev = int(edgestr[1])
-        mu = 0
-        mv = 0
-        for i in range(workerN):
-            if nodeu < splits[i][1]:
-                mu = i
-                break
-        for i in range(workerN):
-            if nodev < splits[i][1]:
-                mv = i
-                break
-        flst[mu].write(line)
-        if not mu == mv:
-            flst[mu].write(line)
-
     f.close()
-    for subf in flst:
-        subf.close()
     return splits
 
 
@@ -120,7 +97,6 @@ if __name__ == '__main__':
     for i in range(workerN):
         xmlwi = xmlw.format(i=i)
         waddr = "%s:%d" % (machineip, wport_base + i)
-        subgrph = "%s-%d" % (graphfl, i)
         workerXml(
             xmlwi,
             waddr,
@@ -128,5 +104,5 @@ if __name__ == '__main__':
             splits[i][0],
             splits[i][1],
             dbfl + 'db' + str(i),
-            subgrph,
+            graphfl,
             wlist)
