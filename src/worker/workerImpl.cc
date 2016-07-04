@@ -62,7 +62,7 @@ Status WorkerImpl::PullModel(ServerContext *ctxt, const PullRequest *req, PullRe
     std::string value;
     for (int i=startid;i<endid;i++) {
         db->Get(leveldb::ReadOptions(), pull_version+"_"+to_string(i), &value);
-        (*(reply->mutable_model()))[i]=std::stoi(value);
+        (*(reply->mutable_model()))[i]=std::stof(value);
     }
     reply->set_status(PullReply::OK);
     return Status::OK;
