@@ -30,3 +30,7 @@ vector<string> XmlLoader::GetWorkerVec() {
 
     return ret;
 }
+
+int XmlLoader::GetIterN() {
+    return pt_.get<int>("configure.maxiter");
+}

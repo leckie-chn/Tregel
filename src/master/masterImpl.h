@@ -40,8 +40,9 @@ class MasterImpl final : public master::MasterService::Service {
         pthread_cond_t cond_;   // condition variable on release all blocking workers
 
         // determine if the compute has come to an end
-        bool haltRound();
+        bool haltRound(int);
         bool halt_;
+        const int maxiter_;
         
 
         
