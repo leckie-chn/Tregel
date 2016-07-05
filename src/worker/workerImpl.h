@@ -51,6 +51,7 @@ class WorkerImpl final : public worker::WorkerService::Service {
         int startid;
         int endid;
         int version;
+        bool converged = false;
         std::string version_string;
         leveldb::DB* db;
 

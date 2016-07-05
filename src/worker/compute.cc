@@ -1,6 +1,7 @@
 #include "src/worker/workerImpl.h"
 #include "src/util/logger.h"
 #include <unistd.h>
+#include <math.h>
 
 using namespace master;
 using namespace grpc;
@@ -70,10 +71,14 @@ void *compute_thread(void *arg) {
         
         request.set_roundno(impl->version);
         request.set_workeraddr(impl->GetServiceAddr());
-        request.set_converge(false);
+        request.set_converge(impl->converged);
         
         impl->stub->Barrier(&context, request, &reply);
         if (reply.done()) {
+            File * fp = fopen("out.txt","w");
+            for (int i=impl->startid;i<impl->endid;i++) {
+                fprintf(fp, "%d %f\n", i,impl->local_nodes[i]);
+            }
             impl->Shutdown();
             break;  // TODO shutdown
         }
@@ -95,6 +100,12 @@ void *compute_thread(void *arg) {
             impl->nodes[i]=impl->local_nodes[i];
         }
         page_rank();
+        impl->converged = true;
+        for (int i=impl->startid;i<impl->endid;i++) {
+            if (fabs(impl->nodes[i]-impl->local_nodes[i]) > 1e-2){
+                impl->converged = false;
+            }
+        }        
         writeToDisk(); //version++
         request.set_roundno(impl->version);
         // TODO judge whether this round of computation has converged
