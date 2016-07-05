@@ -74,6 +74,7 @@ void *compute_thread(void *arg) {
         
         impl->stub->Barrier(&context, request, &reply);
         if (reply.done()) {
+            impl->Shutdown();
             break;  // TODO shutdown
         }
         // TODO pull model from peer workers
