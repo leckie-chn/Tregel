@@ -6,13 +6,10 @@
 #include "master.pb.h"
 #include "masterImpl.h"
 
-using grpc::Status;
-using grpc::ServerContext;
-using grpc::Server;
-using grpc::ServerBuilder;
-using grpc::InsecureServerCredentials;
-using grpc::string;
+using namespace grpc;
+using namespace std;
 
+unique_ptr<Server> server;
 
 int main(int argc, char **argv) {
 
@@ -21,7 +18,7 @@ int main(int argc, char **argv) {
     ServerBuilder builder;
     builder.AddListeningPort(service.GetServiceAddr(), InsecureServerCredentials());
     builder.RegisterService(&service);
-    std::unique_ptr<Server> server(builder.BuildAndStart());
+    server = builder.BuildAndStart();
     server->Wait();
 
     return 0;

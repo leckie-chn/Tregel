@@ -6,6 +6,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
+#include <grpc++/grpc++.h>
 
 
 
@@ -16,6 +17,8 @@ using namespace std::chrono;
 using namespace grpc;
 using namespace worker;
 using namespace master;
+
+extern unique_ptr<Server> server;
 
 MasterImpl::WorkerC::WorkerC():
     waiting_(false),
@@ -68,6 +71,10 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
             // reset waiting_
             for (auto & iter : Workers_)
                 iter.second.waiting_ = false;
+            if (halt_) {
+                LOG("Pagerank Compute Done in %d Rounds\n", roundno_);
+                server->Shutdown();
+            }
             pthread_cond_broadcast(&cond_);
         } else 
             pthread_cond_wait(&cond_, &mu_);

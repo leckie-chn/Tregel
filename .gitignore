@@ -3,6 +3,7 @@ bin/
 logs/
 data/
 tmp/
+docker/
 .ycm_extra_conf.py
 .ycm_extra_conf.pyc
 .idea

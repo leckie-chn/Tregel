@@ -20,6 +20,7 @@ using std::unique_ptr;
 
 WorkerImpl *impl;
 pthread_t pid;
+unique_ptr<Server> server;
 
 int main(int argc, char **argv) {
 
@@ -27,7 +28,7 @@ int main(int argc, char **argv) {
     ServerBuilder builder;
     builder.AddListeningPort(impl->GetServiceAddr(), InsecureServerCredentials());
     builder.RegisterService(impl);
-    unique_ptr<Server> server(builder.BuildAndStart());
+    server = builder.BuildAndStart();
 
     pthread_create(&pid, NULL, compute_thread, NULL);
     server->Wait();

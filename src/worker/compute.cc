@@ -2,6 +2,7 @@
 #include "src/util/logger.h"
 #include <unistd.h>
 #include <math.h>
+#include <grpc++/grpc++.h>
 
 using namespace master;
 using namespace grpc;
@@ -9,6 +10,7 @@ using namespace std;
 using namespace worker;
 
 extern WorkerImpl *impl;
+extern unique_ptr<Server> server;
 
 bool pull(WorkerImpl::WorkerC & c) {
     PullRequest request;
@@ -75,15 +77,15 @@ void *compute_thread(void *arg) {
         
         impl->stub->Barrier(&context, request, &reply);
         if (reply.done()) {
-            File * fp = fopen("out.txt","w");
+            FILE * fp = fopen("out.txt","w");
             for (int i=impl->startid;i<impl->endid;i++) {
                 fprintf(fp, "%d %f\n", i,impl->local_nodes[i]);
             }
-            close(fp);
-            impl->Shutdown();
-            break;  // TODO shutdown
+            fclose(fp);
+            LOG("shutdown on Round %d\n", impl->version);           
+            server->Shutdown();
+            break; 
         }
-        // TODO pull model from peer workers
         int workmate_count=0;
         for (auto iter = impl->Workers.begin(); iter != impl->Workers.end(); iter++){
             iter->second.hasmodel=false;

@@ -24,6 +24,7 @@ using namespace std::chrono;
 using boost::property_tree::ptree;
 
 
+
 WorkerImpl::WorkerC::WorkerC(const string & _addr):
     addr_ (_addr),
     stub (WorkerService::NewStub(CreateChannel(_addr, grpc::InsecureChannelCredentials()))) {
