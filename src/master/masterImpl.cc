@@ -26,7 +26,8 @@ MasterImpl::MasterImpl(const string &confxml):
     roundno_(-1),
     mu_(PTHREAD_MUTEX_INITIALIZER),
     cond_(PTHREAD_COND_INITIALIZER),
-    servAddr(conf_.GetMasterAddr()){
+    maxiter_(conf_.GetIterN()),
+    servAddr(conf_.GetMasterAddr()) {
         auto workers = conf_.GetWorkerVec();
         for (auto iter : workers) {
             Workers_.insert(make_pair(iter, WorkerC()));
@@ -61,21 +62,25 @@ Status MasterImpl::Barrier(ServerContext *_ctxt,
             } 
 
         if (allsync) {
-            // cout << "Round " << roundno_ << " Done" << endl;
-            LOG("Round %d Done\n", roundno_);
-            halt_ = haltRound();
             roundno_++;
+            halt_ = haltRound(roundno_);
+            LOG("Round %d Done\n", roundno_);
+            // reset waiting_
+            for (auto & iter : Workers_)
+                iter.second.waiting_ = false;
             pthread_cond_broadcast(&cond_);
         } else 
             pthread_cond_wait(&cond_, &mu_);
-        
         pthread_mutex_unlock(&mu_);
+        _reply->set_status(BarrierReply_BarrierStatus_OK);
+        _reply->set_done(halt_);
     } 
 
     return Status::OK;
 }
 
-bool MasterImpl::haltRound() {
+bool MasterImpl::haltRound(int currRound) {
+    if (currRound > maxiter_) return true;
     for (auto & iter : Workers_) 
         if (!iter.second.converge_)
             return false;

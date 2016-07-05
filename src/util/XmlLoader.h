@@ -26,6 +26,9 @@ public:
 
     // Get the Addresses of Workers
     std::vector<std::string> GetWorkerVec();
+
+    // Get the number of Iteration
+    int GetIterN();
 };
 
 
