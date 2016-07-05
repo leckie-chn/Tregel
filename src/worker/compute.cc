@@ -79,6 +79,7 @@ void *compute_thread(void *arg) {
             for (int i=impl->startid;i<impl->endid;i++) {
                 fprintf(fp, "%d %f\n", i,impl->local_nodes[i]);
             }
+            close(fp);
             impl->Shutdown();
             break;  // TODO shutdown
         }
